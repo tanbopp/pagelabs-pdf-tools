@@ -1,0 +1,53 @@
+import {
+  Combine,
+  Split,
+  FileMinus,
+  FileSpreadsheet,
+  Layers,
+  RotateCw,
+  Minimize2,
+  Wrench,
+  FileSearch,
+  Archive,
+  FileText,
+  Table,
+  Presentation,
+  Image,
+  Globe,
+  Lock,
+  Unlock,
+  PenTool,
+  EyeOff,
+  Sparkles,
+  Languages,
+  FileCode,
+  type LucideIcon,
+} from "lucide-react";
+
+export const ICON_MAP: Record<string, LucideIcon> = {
+  Combine,
+  Split,
+  FileMinus,
+  FileSpreadsheet,
+  Layers,
+  RotateCw,
+  Minimize2,
+  Wrench,
+  FileSearch,
+  Archive,
+  FileText,
+  Table,
+  Presentation,
+  Image,
+  Globe,
+  Lock,
+  Unlock,
+  PenTool,
+  EyeOff,
+  Sparkles,
+  Languages,
+};
+
+export function getToolIcon(iconName: string): LucideIcon {
+  return ICON_MAP[iconName] || FileCode;
+}
