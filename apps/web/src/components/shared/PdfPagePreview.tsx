@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { X, GripVertical, FileText } from "lucide-react";
+import { toast } from "sonner";
 import { getPdfFirstPagePreview } from "@/lib/pdf-preview";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +58,7 @@ export function PdfPagePreview({
       <div className="absolute top-2.5 right-2.5 z-20">
         <div
           aria-hidden="true"
+          title="Drag handle"
           className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground group-hover:hidden transition-colors"
         >
           <GripVertical className="h-4 w-4" />
@@ -66,10 +68,11 @@ export function PdfPagePreview({
           type="button"
           onClick={(e) => {
             e.stopPropagation();
+            toast.info(`Removed ${file.name}`);
             onRemove();
           }}
-          aria-label={`Remove ${file.name}`}
-          className="hidden group-hover:flex h-7 w-7 rounded-full bg-secondary border border-border items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          aria-label={`Remove file ${file.name}`}
+          className="hidden group-hover:flex h-7 w-7 rounded-full bg-secondary border border-border items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="h-4 w-4" />
         </button>

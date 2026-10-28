@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -138,8 +139,8 @@ export default function ScanToPdfPage() {
       });
 
       if (!jobRes.ok) {
-        const errorJson = await jobRes.json();
-        throw new Error(errorJson.error_message || errorJson.message || "Failed to create conversion job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const jobData = await jobRes.json();

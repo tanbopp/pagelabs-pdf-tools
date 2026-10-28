@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -134,8 +135,8 @@ export default function HtmlToPdfPage() {
       });
 
       if (!jobRes.ok) {
-        const errorData = await jobRes.json();
-        throw new Error(errorData.error || "Failed to submit conversion job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const { id } = await jobRes.json();

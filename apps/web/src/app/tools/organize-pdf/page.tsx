@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -13,7 +14,7 @@ import {
 } from "@/components/shared";
 import { toast } from "sonner";
 import { getAllPdfPagesPreviews } from "@/lib/pdf-all-pages";
-import { ChevronRight, ArrowRight, RefreshCcw, Info, Loader2 } from "lucide-react";
+import { ChevronRight, ArrowRight, RefreshCcw, Info, Loader2, RotateCw } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -84,6 +85,16 @@ export default function OrganizePdfPage() {
     } finally {
       setLoadingPages(false);
     }
+  };
+
+  const handleRotateAll = () => {
+    setPages((prev) =>
+      prev.map((p) => ({
+        ...p,
+        rotation: (p.rotation + 90) % 360,
+      }))
+    );
+    toast.success("Rotated all pages 90°");
   };
 
   const handleReset = () => {
@@ -204,8 +215,8 @@ export default function OrganizePdfPage() {
       });
 
       if (!jobRes.ok) {
-        const err = await jobRes.json();
-        throw new Error(err.error_message || "Failed to create organize job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const { jobId: newId } = await jobRes.json();
@@ -264,6 +275,15 @@ export default function OrganizePdfPage() {
                 <span className="text-xs font-semibold text-muted-foreground">
                   {pages.length} pages
                 </span>
+                <button
+                  type="button"
+                  onClick={handleRotateAll}
+                  title="Rotate all pages 90 degrees clockwise"
+                  className="h-9 px-3.5 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <RotateCw className="h-3.5 w-3.5" />
+                  <span>Rotate All</span>
+                </button>
                 <button
                   type="button"
                   onClick={handleReset}

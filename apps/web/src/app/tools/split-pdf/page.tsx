@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -208,8 +209,8 @@ export default function SplitPdfPage() {
       });
 
       if (!jobRes.ok) {
-        const err = await jobRes.json();
-        throw new Error(err.error_message || "Failed to create split job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const { jobId: newId } = await jobRes.json();

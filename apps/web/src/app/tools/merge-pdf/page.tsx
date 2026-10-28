@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -13,7 +14,7 @@ import {
 } from "@/components/shared";
 import { toast } from "sonner";
 import * as SwitchPrimitives from "@radix-ui/react-switch";
-import { Plus, ChevronRight, Info, ArrowRight } from "lucide-react";
+import { Plus, ChevronRight, Info, ArrowRight, ArrowDownAZ } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -126,6 +127,15 @@ export default function MergePdfPage() {
     }
   };
 
+  const handleSortByName = () => {
+    setFileItems((prev) =>
+      [...prev].sort((a, b) =>
+        a.file.name.localeCompare(b.file.name, undefined, { numeric: true, sensitivity: "base" })
+      )
+    );
+    toast.success("Files sorted alphabetically (A-Z)");
+  };
+
   const handleReset = () => {
     setFileItems([]);
     setStatus("idle");
@@ -191,9 +201,9 @@ export default function MergePdfPage() {
         });
 
         if (!signRes.ok) {
-          const errData = await signRes.json().catch(() => ({}));
-          throw new Error(errData.error_message || `Failed to sign ${file.name}`);
-        }
+        const errMsg = await parseApiError(signRes, "Failed to sign upload");
+        throw new Error(errMsg);
+      }
 
         const { uploadUrl, fileUrl } = await signRes.json();
 
@@ -228,8 +238,8 @@ export default function MergePdfPage() {
       });
 
       if (!jobRes.ok) {
-        const errData = await jobRes.json().catch(() => ({}));
-        throw new Error(errData.error_message || "Failed to create merge job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const { jobId: newJobId } = await jobRes.json();
@@ -290,6 +300,17 @@ export default function MergePdfPage() {
                 <span className="text-xs font-semibold text-muted-foreground">
                   {fileItems.length} of 20 files
                 </span>
+                {fileItems.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleSortByName}
+                    title="Sort files by name A to Z"
+                    className="h-9 px-3.5 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <ArrowDownAZ className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Sort A-Z</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => addMoreInputRef.current?.click()}
@@ -472,8 +493,14 @@ export default function MergePdfPage() {
                   disabled={fileItems.length < 2 || status === "processing"}
                   className="w-full h-14 rounded-full bg-primary text-primary-foreground text-base font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity cursor-pointer"
                 >
-                  <span>{status === "processing" ? "Merging…" : "Merge PDF"}</span>
-                  {status !== "processing" && <ArrowRight className="h-4 w-4" />}
+                  <span>
+                    {status === "processing"
+                      ? "Merging…"
+                      : fileItems.length < 2
+                      ? "Select at least 2 files"
+                      : `Merge ${fileItems.length} PDFs`}
+                  </span>
+                  {status !== "processing" && fileItems.length >= 2 && <ArrowRight className="h-4 w-4" />}
                 </button>
               )}
             </div>

@@ -57,15 +57,15 @@ export function OrganizePageCard({
       )}
     >
       {/* Top action row: Rotate and Remove (X) buttons */}
-      <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onRotate();
           }}
-          aria-label="Rotate 90 degrees"
-          className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          aria-label={`Rotate page ${index + 1} 90 degrees`}
+          className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring"
         >
           <RotateCw className="h-3.5 w-3.5" />
         </button>
@@ -76,8 +76,8 @@ export function OrganizePageCard({
             e.stopPropagation();
             onRemove();
           }}
-          aria-label="Delete page"
-          className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          aria-label={`Delete page ${index + 1}`}
+          className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="h-4 w-4" />
         </button>

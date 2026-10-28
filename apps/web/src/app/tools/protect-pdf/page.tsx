@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -11,7 +12,7 @@ import {
   ErrorAlert,
 } from "@/components/shared";
 import { toast } from "sonner";
-import { ChevronRight, ArrowRight, RefreshCcw, Lock } from "lucide-react";
+import { ChevronRight, ArrowRight, RefreshCcw, Lock, Eye, EyeOff } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -19,6 +20,7 @@ export default function ProtectPdfPage() {
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [allowPrinting, setAllowPrinting] = useState(false);
   const [allowCopying, setAllowCopying] = useState(false);
   const [outputBaseName, setOutputBaseName] = useState("protected");
@@ -112,8 +114,8 @@ export default function ProtectPdfPage() {
         }),
       });
       if (!signRes.ok) {
-        const signErr = await signRes.json().catch(() => ({}));
-        throw new Error(signErr.error_message || "Failed to sign upload URL");
+        const errMsg = await parseApiError(signRes, "Failed to sign upload");
+        throw new Error(errMsg);
       }
       const { uploadUrl, fileUrl } = await signRes.json();
 
@@ -149,8 +151,8 @@ export default function ProtectPdfPage() {
       });
 
       if (!jobRes.ok) {
-        const errorJson = await jobRes.json();
-        throw new Error(errorJson.error_message || errorJson.message || "Failed to create protection job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const jobData = await jobRes.json();
@@ -230,12 +232,22 @@ export default function ProtectPdfPage() {
               {/* Password inputs */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="protect-pwd" className="text-xs font-semibold text-foreground">
-                    Set Password
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="protect-pwd" className="text-xs font-semibold text-foreground">
+                      Set Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    >
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      <span>{showPassword ? "Hide" : "Show"}</span>
+                    </button>
+                  </div>
                   <input
                     id="protect-pwd"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="Enter secure password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -249,7 +261,7 @@ export default function ProtectPdfPage() {
                   </label>
                   <input
                     id="protect-confirm"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="Re-enter password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}

@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -12,7 +13,8 @@ import {
   CustomSelect,
 } from "@/components/shared";
 import { toast } from "sonner";
-import { ChevronRight, ArrowRight, RefreshCcw, PenTool, Upload } from "lucide-react";
+import { ChevronRight, ArrowRight, RefreshCcw, PenTool, RotateCcw } from "lucide-react";
+import SignatureCanvas from "react-signature-canvas";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -23,6 +25,8 @@ export default function SignPdfPage() {
   const [page, setPage] = useState<string>("last");
   const [position, setPosition] = useState<"bottom-right" | "bottom-center" | "top-right">("bottom-right");
   const [outputBaseName, setOutputBaseName] = useState("signed");
+
+  const sigCanvasRef = useRef<SignatureCanvas | null>(null);
 
   const [status, setStatus] = useState<"idle" | "processing" | "completed" | "failed">("idle");
   const [jobId, setJobId] = useState<string | null>(null);
@@ -44,14 +48,14 @@ export default function SignPdfPage() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setSignatureImageBase64(reader.result as string);
-      };
-      reader.readAsDataURL(f);
+  const clearCanvas = () => {
+    sigCanvasRef.current?.clear();
+    setSignatureImageBase64("");
+  };
+
+  const handleCanvasEnd = () => {
+    if (sigCanvasRef.current && !sigCanvasRef.current.isEmpty()) {
+      setSignatureImageBase64(sigCanvasRef.current.getTrimmedCanvas().toDataURL("image/png"));
     }
   };
 
@@ -63,6 +67,7 @@ export default function SignPdfPage() {
     setResultData(null);
     setNameText("");
     setSignatureImageBase64("");
+    sigCanvasRef.current?.clear();
     setPage("last");
     setPosition("bottom-right");
     setOutputBaseName("signed");
@@ -120,8 +125,8 @@ export default function SignPdfPage() {
         }),
       });
       if (!signRes.ok) {
-        const signErr = await signRes.json().catch(() => ({}));
-        throw new Error(signErr.error_message || "Failed to sign upload URL");
+        const errMsg = await parseApiError(signRes, "Failed to sign upload");
+        throw new Error(errMsg);
       }
       const { uploadUrl, fileUrl } = await signRes.json();
 
@@ -158,8 +163,8 @@ export default function SignPdfPage() {
       });
 
       if (!jobRes.ok) {
-        const errorJson = await jobRes.json();
-        throw new Error(errorJson.error_message || errorJson.message || "Failed to create signature job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const jobData = await jobRes.json();
@@ -236,23 +241,36 @@ export default function SignPdfPage() {
                 </div>
               </div>
 
-              {/* Signature Image upload */}
+              {/* Signature Canvas Pad */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground">
-                  Signature Image (PNG with transparent bg)
-                </label>
-                <label className="flex items-center gap-2 p-3 rounded-2xl border border-dashed border-border hover:bg-secondary/40 cursor-pointer transition-colors">
-                  <Upload className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground truncate">
-                    {signatureImageBase64 ? "Signature image loaded" : "Upload signature PNG"}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg"
-                    onChange={handleImageUpload}
-                    className="hidden"
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-foreground">
+                    Draw Signature
+                  </label>
+                  <button
+                    type="button"
+                    onClick={clearCanvas}
+                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Clear</span>
+                  </button>
+                </div>
+                <div className="rounded-2xl border border-border bg-card overflow-hidden h-36 flex items-center justify-center relative">
+                  <SignatureCanvas
+                    ref={sigCanvasRef}
+                    penColor="#000000"
+                    canvasProps={{
+                      className: "w-full h-full cursor-crosshair bg-white",
+                    }}
+                    onEnd={handleCanvasEnd}
                   />
-                </label>
+                  {!signatureImageBase64 && (
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-xs text-muted-foreground/40 font-semibold">
+                      Draw with mouse or finger here
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Typed signature text */}

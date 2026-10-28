@@ -1,6 +1,24 @@
+# Stage 1: Builder
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+COPY requirements.txt .
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# Stage 2: Final Runtime
 FROM python:3.12-slim
 
-# Install system dependencies: qpdf, ghostscript, ocrmypdf, tesseract (eng + ind), and libreoffice
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/install/bin:$PATH" \
+    PYTHONPATH="/install/lib/python3.12/site-packages:$PYTHONPATH"
+
+# Install only essential runtime packages & tools: qpdf, ghostscript, tesseract, libreoffice
 RUN apt-get update && apt-get install -y --no-install-recommends \
     qpdf \
     ghostscript \
@@ -19,12 +37,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy installed Python packages from builder stage
+COPY --from=builder /install /install
+
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    playwright install-deps chromium && \
-    playwright install chromium
+# Install Playwright browser binaries
+RUN python -m playwright install --with-deps chromium
 
 COPY . .
 

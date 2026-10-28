@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -96,8 +97,8 @@ export default function CompressPdfPage() {
         }),
       });
       if (!signRes.ok) {
-        const signErr = await signRes.json().catch(() => ({}));
-        throw new Error(signErr.error_message || "Failed to sign upload URL");
+        const errMsg = await parseApiError(signRes, "Failed to sign upload");
+        throw new Error(errMsg);
       }
       const { uploadUrl, fileUrl } = await signRes.json();
 
@@ -131,8 +132,8 @@ export default function CompressPdfPage() {
       });
 
       if (!jobRes.ok) {
-        const errorJson = await jobRes.json();
-        throw new Error(errorJson.error_message || errorJson.message || "Failed to create compression job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const jobData = await jobRes.json();
@@ -141,6 +142,17 @@ export default function CompressPdfPage() {
       setStatus("failed");
       setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");
     }
+  };
+
+  const getEstimatedSize = (levelId: "less" | "recommended" | "extreme") => {
+    if (!file) return "";
+    const size = file.size;
+    let factor = 0.7; // 30% reduction
+    if (levelId === "recommended") factor = 0.45; // 55% reduction
+    if (levelId === "extreme") factor = 0.25; // 75% reduction
+    const est = size * factor;
+    if (est < 1024 * 1024) return `~${(est / 1024).toFixed(0)} KB`;
+    return `~${(est / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const compressionOptions = [
@@ -237,7 +249,14 @@ export default function CompressPdfPage() {
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-bold text-foreground">{opt.title}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-foreground">{opt.title}</span>
+                          {file && (
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-secondary text-foreground">
+                              {getEstimatedSize(opt.id)}
+                            </span>
+                          )}
+                        </div>
                         <div
                           className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                             isSelected ? "border-foreground bg-foreground" : "border-muted-foreground/40"

@@ -9,6 +9,7 @@ import { jobDb } from "./db.js";
 import { fileStorage } from "./storage.js";
 import { enqueueJob } from "./queue.js";
 import { rateLimiter } from "./rate-limit.js";
+import { validateFileMagicBytes } from "./magic-bytes.js";
 import {
   createJobSchema,
   signUploadSchema,
@@ -187,6 +188,26 @@ app.post("/api/v1/jobs", async (c) => {
           },
           400
         );
+      }
+    }
+
+    // 4.1 Validate Magic Bytes (PRD §8.2 Security / prevent MIME spoofing)
+    for (const f of files) {
+      const fileId = f.url.split("/").pop() || "";
+      const localFilePath = fileStorage.getUploadPath(fileId);
+      if (fs.existsSync(localFilePath)) {
+        const magicCheck = validateFileMagicBytes(localFilePath, f.name, tool);
+        if (!magicCheck.isValid) {
+          return c.json(
+            {
+              error_code: "INVALID_FILE_HEADER",
+              error_message:
+                magicCheck.reason ||
+                `Invalid file format for "${f.name}". File contents do not match expected binary signatures.`,
+            },
+            400
+          );
+        }
       }
     }
 

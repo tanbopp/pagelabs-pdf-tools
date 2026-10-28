@@ -79,6 +79,11 @@ export function FileDropZone({
     }
 
     if (validFiles.length > 0) {
+      if (validFiles.length === 1) {
+        toast.success(`1 file added: ${validFiles[0].name}`);
+      } else {
+        toast.success(`${validFiles.length} files added`);
+      }
       onFiles(validFiles);
     }
   };
@@ -105,6 +110,7 @@ export function FileDropZone({
     <div
       role="button"
       tabIndex={disabled ? -1 : 0}
+      aria-label={title || "Drop PDF files here or click to browse"}
       aria-disabled={disabled}
       aria-describedby="file-dropzone-constraints"
       onClick={() => !disabled && inputRef.current?.click()}
@@ -118,9 +124,9 @@ export function FileDropZone({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "rounded-3xl border-2 border-dashed p-12 min-h-[280px] flex flex-col items-center justify-center gap-3 transition-colors cursor-pointer select-none",
+        "rounded-3xl border-2 border-dashed p-12 min-h-[280px] flex flex-col items-center justify-center gap-3 transition-all duration-200 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isDragOver
-          ? "border-foreground bg-accent"
+          ? "border-foreground bg-accent/80 scale-[1.01] animate-pulse"
           : "border-border bg-card/40 hover:border-foreground/50",
         disabled && "opacity-50 cursor-not-allowed"
       )}
@@ -131,6 +137,7 @@ export function FileDropZone({
         multiple={maxFiles > 1}
         accept={accept}
         disabled={disabled}
+        aria-label="Upload file input"
         className="hidden"
         onChange={(e) => {
           validateAndAddFiles(e.target.files);

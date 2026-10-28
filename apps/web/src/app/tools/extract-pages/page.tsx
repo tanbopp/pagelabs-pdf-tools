@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -19,6 +20,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export default function ExtractPagesPage() {
   const [file, setFile] = useState<File | null>(null);
   const [pagesStr, setPagesStr] = useState("1");
+  const [pagesError, setPagesError] = useState<string | null>(null);
   const [separateFiles, setSeparateFiles] = useState(false);
   const [outputBaseName, setOutputBaseName] = useState("extracted");
 
@@ -37,6 +39,22 @@ export default function ExtractPagesPage() {
     if (files.length > 0) {
       setFile(files[0]);
       setErrorMessage(null);
+    }
+  };
+
+  const validateRange = (val: string) => {
+    setPagesStr(val);
+    const cleaned = val.trim();
+    if (!cleaned) {
+      setPagesError("Please specify at least one page");
+      return;
+    }
+    // Pattern: comma-separated list of numbers or ranges like 1-3, 5
+    const isValid = /^(\s*\d+\s*(-\s*\d+\s*)?,?\s*)+$/.test(cleaned);
+    if (!isValid) {
+      setPagesError("Use format: 1-3, 5");
+    } else {
+      setPagesError(null);
     }
   };
 
@@ -123,8 +141,8 @@ export default function ExtractPagesPage() {
       });
 
       if (!jobRes.ok) {
-        const err = await jobRes.json();
-        throw new Error(err.error_message || "Failed to create extract-pages job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const { jobId: newId } = await jobRes.json();
@@ -197,17 +215,33 @@ export default function ExtractPagesPage() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label htmlFor="pages-extract" className="text-xs font-semibold text-foreground">
-                  Pages to extract (e.g. 1-3, 5)
-                </label>
+                <div className="flex items-center justify-between">
+                  <label htmlFor="pages-extract" className="text-xs font-semibold text-foreground">
+                    Pages to extract (e.g. 1-3, 5)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => validateRange("1-999")}
+                    className="text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    All pages
+                  </button>
+                </div>
                 <input
                   id="pages-extract"
                   type="text"
                   value={pagesStr}
-                  onChange={(e) => setPagesStr(e.target.value)}
+                  onChange={(e) => validateRange(e.target.value)}
                   placeholder="1-3, 5"
-                  className="h-11 px-4 rounded-2xl border border-border bg-background text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  className={`h-11 px-4 rounded-2xl border bg-background text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
+                    pagesError ? "border-foreground ring-1 ring-foreground" : "border-border"
+                  }`}
                 />
+                {pagesError && (
+                  <span className="text-[11px] font-semibold text-muted-foreground">
+                    {pagesError}
+                  </span>
+                )}
               </div>
 
               {/* Toggle extract each page as separate file */}
@@ -268,10 +302,16 @@ export default function ExtractPagesPage() {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={status === "processing" || !pagesStr.trim()}
+                  disabled={status === "processing" || !pagesStr.trim() || !!pagesError}
                   className="w-full h-14 rounded-full bg-primary text-primary-foreground text-base font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer"
                 >
-                  <span>{status === "processing" ? "Extracting…" : "Extract Pages"}</span>
+                  <span>
+                    {status === "processing"
+                      ? "Extracting…"
+                      : pagesStr.trim()
+                      ? `Extract Pages (${pagesStr.trim()})`
+                      : "Extract Pages"}
+                  </span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
               )}

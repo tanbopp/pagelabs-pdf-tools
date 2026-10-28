@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -12,7 +13,8 @@ import {
   CustomSelect,
 } from "@/components/shared";
 import { toast } from "sonner";
-import { ChevronRight, ArrowRight, RefreshCcw, Hash } from "lucide-react";
+import { ChevronRight, ArrowRight, RefreshCcw, Hash, FileText } from "lucide-react";
+import { getPdfFirstPagePreview } from "@/lib/pdf-preview";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -34,19 +36,31 @@ export default function AddPageNumbersPage() {
     filename: string;
   } | null>(null);
 
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleFile = (files: File[]) => {
     if (files.length > 0) {
-      setFile(files[0]);
+      const selected = files[0];
+      setFile(selected);
       setErrorMessage(null);
-      const nameWithoutExt = files[0].name.replace(/\.[^/.]+$/, "");
+      const nameWithoutExt = selected.name.replace(/\.[^/.]+$/, "");
       setOutputBaseName(`${nameWithoutExt}-numbered`);
+      setLoadingPreview(true);
+      getPdfFirstPagePreview(selected, 500)
+        .then((url) => {
+          setPreviewUrl(url);
+          setLoadingPreview(false);
+        })
+        .catch(() => setLoadingPreview(false));
     }
   };
 
   const handleReset = () => {
     setFile(null);
+    setPreviewUrl(null);
     setStatus("idle");
     setJobId(null);
     setErrorMessage(null);
@@ -104,8 +118,8 @@ export default function AddPageNumbersPage() {
         }),
       });
       if (!signRes.ok) {
-        const signErr = await signRes.json().catch(() => ({}));
-        throw new Error(signErr.error_message || "Failed to sign upload URL");
+        const errMsg = await parseApiError(signRes, "Failed to sign upload");
+        throw new Error(errMsg);
       }
       const { uploadUrl, fileUrl } = await signRes.json();
 
@@ -141,8 +155,8 @@ export default function AddPageNumbersPage() {
       });
 
       if (!jobRes.ok) {
-        const errorJson = await jobRes.json();
-        throw new Error(errorJson.error_message || errorJson.message || "Failed to create job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const jobData = await jobRes.json();
@@ -198,12 +212,51 @@ export default function AddPageNumbersPage() {
               </button>
             </div>
 
-            <div className="max-w-sm">
-              <PdfPagePreview
-                file={file}
-                index={0}
-                onRemove={handleReset}
-              />
+            <div className="max-w-md w-full flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">Interactive Live Preview</span>
+                <span className="text-xs font-semibold text-muted-foreground">{file.name}</span>
+              </div>
+
+              <div className="relative aspect-[3/4] w-full rounded-2xl border border-border bg-card overflow-hidden flex items-center justify-center p-3 select-none">
+                {previewUrl ? (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <img
+                      src={previewUrl}
+                      alt="PDF Preview"
+                      className="w-full h-full object-contain pointer-events-none"
+                    />
+
+                    {/* REACIVE NUMBERING OVERLAY */}
+                    <div
+                      className={`absolute pointer-events-none transition-all duration-200 px-3 py-1 font-sans text-xs font-bold text-foreground bg-background/80 border border-border/80 rounded-md backdrop-blur-xs ${
+                        position === "top-left"
+                          ? "top-4 left-4"
+                          : position === "top-center"
+                          ? "top-4 left-1/2 -translate-x-1/2"
+                          : position === "top-right"
+                          ? "top-4 right-4"
+                          : position === "bottom-left"
+                          ? "bottom-4 left-4"
+                          : position === "bottom-right"
+                          ? "bottom-4 right-4"
+                          : "bottom-4 left-1/2 -translate-x-1/2"
+                      }`}
+                    >
+                      {format === "Page 1"
+                        ? `Page ${startNumber}`
+                        : format === "1"
+                        ? `${startNumber}`
+                        : `${startNumber} / 1`}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                    <FileText className="w-8 h-8 opacity-40 animate-pulse" />
+                    <span className="text-xs font-semibold">Generating live preview…</span>
+                  </div>
+                )}
+              </div>
             </div>
           </section>
 

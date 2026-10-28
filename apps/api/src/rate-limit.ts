@@ -33,7 +33,7 @@ export const rateLimiter: MiddlewareHandler = async (c, next) => {
     return c.json(
       {
         error_code: "RATE_LIMITED",
-        error_message: "Too many requests. Try again later.",
+        error_message: "You have reached the limit. Please try again in an hour.",
       },
       429
     );

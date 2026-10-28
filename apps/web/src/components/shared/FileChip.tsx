@@ -1,5 +1,6 @@
 import React from "react";
 import { FileText, X } from "lucide-react";
+import { toast } from "sonner";
 
 export interface FileChipProps {
   file: File;
@@ -40,6 +41,7 @@ export function FileChip({
         type="button"
         onClick={(e) => {
           e.stopPropagation();
+          toast.info(`Removed ${file.name}`);
           onRemove();
         }}
         aria-label={`Remove ${file.name}`}

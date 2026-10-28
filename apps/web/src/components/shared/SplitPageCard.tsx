@@ -79,9 +79,9 @@ export function SplitPageCard({
             e.stopPropagation();
             onToggleSelect();
           }}
-          aria-label={item.selected ? "Deselect for split" : "Select for split"}
+          aria-label={item.selected ? `Deselect page ${index + 1} for split` : `Select page ${index + 1} for split`}
           className={cn(
-            "h-6 w-6 rounded-full border flex items-center justify-center transition-colors pointer-events-auto cursor-pointer",
+            "h-6 w-6 rounded-full border flex items-center justify-center transition-colors pointer-events-auto cursor-pointer focus-visible:ring-2 focus-visible:ring-ring",
             item.selected
               ? "bg-foreground text-background border-foreground"
               : "bg-secondary/90 border-border text-muted-foreground hover:text-foreground"

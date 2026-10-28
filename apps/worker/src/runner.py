@@ -77,7 +77,11 @@ def main():
             if not source_file.exists():
                 raise FileNotFoundError(f"Source file not found: {file_id}")
 
-            tmp_input = tmpdir / file_info.get("name", file_id)
+            # Prevent directory traversal attacks or malicious path patterns
+            raw_input_name = file_info.get("name", file_id)
+            safe_input_name = Path(raw_input_name).name
+            safe_input_name = re.sub(r"[^\w\s.-]", "_", safe_input_name).strip() or file_id
+            tmp_input = tmpdir / safe_input_name
             shutil.copy2(source_file, tmp_input)
             local_input_paths.append(tmp_input)
 
@@ -198,6 +202,12 @@ def main():
         print(json.dumps(output_data))
         sys.exit(0)
 
+    except MemoryError:
+        sys.stderr.write(json.dumps({
+            "error_code": "OUT_OF_MEMORY",
+            "error_message": "Process exceeded available memory. Please try with smaller files or fewer pages."
+        }))
+        sys.exit(1)
     except PermissionError as pe:
         sys.stderr.write(json.dumps({
             "error_code": "PASSWORD_PROTECTED",

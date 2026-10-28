@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -178,8 +179,8 @@ export default function RemovePagesPage() {
       });
 
       if (!jobRes.ok) {
-        const err = await jobRes.json();
-        throw new Error(err.error_message || "Failed to create remove-pages job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const { jobId: newId } = await jobRes.json();
@@ -364,6 +365,13 @@ export default function RemovePagesPage() {
                     <span className="text-muted-foreground italic">No pages marked yet</span>
                   )}
                 </div>
+                {pages.length > 0 && (
+                  <p className="text-[11px] font-semibold text-muted-foreground px-1">
+                    {removedPages.size === 0
+                      ? `Select pages to remove out of ${pages.length} total pages.`
+                      : `You are about to remove ${removedPages.size} page${removedPages.size > 1 ? "s" : ""} out of ${pages.length}.`}
+                  </p>
+                )}
               </div>
 
               {/* Output Filename */}

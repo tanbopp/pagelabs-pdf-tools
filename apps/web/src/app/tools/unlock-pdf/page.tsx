@@ -1,4 +1,5 @@
 "use client";
+import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -105,8 +106,8 @@ export default function UnlockPdfPage() {
         }),
       });
       if (!signRes.ok) {
-        const signErr = await signRes.json().catch(() => ({}));
-        throw new Error(signErr.error_message || "Failed to sign upload URL");
+        const errMsg = await parseApiError(signRes, "Failed to sign upload");
+        throw new Error(errMsg);
       }
       const { uploadUrl, fileUrl } = await signRes.json();
 
@@ -140,8 +141,8 @@ export default function UnlockPdfPage() {
       });
 
       if (!jobRes.ok) {
-        const errorJson = await jobRes.json();
-        throw new Error(errorJson.error_message || errorJson.message || "Failed to create unlock job");
+        const errMsg = await parseApiError(jobRes, "Failed to process job");
+        throw new Error(errMsg);
       }
 
       const jobData = await jobRes.json();
