@@ -225,16 +225,31 @@ export type ScanToPdfOptions = z.infer<typeof scanToPdfOptionsSchema>;
 
 // 25. Add Page Numbers Options Schema (PRD 7 §7.2)
 export const addPageNumbersOptionsSchema = z.object({
+  pageMode: z.enum(["single", "facing"]).default("single"),
+  firstPageCover: z.boolean().default(false),
   position: z.enum([
-    "bottom-center",
-    "bottom-right",
-    "bottom-left",
+    "top-left",
     "top-center",
     "top-right",
-    "top-left",
-  ]).default("bottom-center"),
+    "middle-left",
+    "middle-center",
+    "middle-right",
+    "bottom-left",
+    "bottom-center",
+    "bottom-right",
+  ]).default("bottom-right"),
+  margin: z.enum(["small", "recommended", "big"]).default("recommended"),
   startNumber: z.number().int().default(1),
-  format: z.enum(["1", "Page 1", "1 / N"]).default("Page 1"),
+  fromPage: z.number().int().optional().default(1),
+  toPage: z.number().int().optional(),
+  format: z.string().default("only-number"),
+  customText: z.string().optional().default("- {n} -"),
+  font: z.enum(["Arial", "Times-Roman", "Courier"]).default("Arial"),
+  size: z.number().int().default(12),
+  isBold: z.boolean().default(false),
+  isItalic: z.boolean().default(false),
+  isUnderline: z.boolean().default(false),
+  color: z.string().default("#000000"),
   outputFilename: z.string().optional().default("numbered.pdf"),
 });
 export type AddPageNumbersOptions = z.infer<typeof addPageNumbersOptionsSchema>;
@@ -299,6 +314,13 @@ export const comparePdfOptionsSchema = z.object({
   outputFilename: z.string().optional().default("comparison.pdf"),
 });
 export type ComparePdfOptions = z.infer<typeof comparePdfOptionsSchema>;
+
+// 30. Edit PDF Options Schema (PRD 11)
+export const editPdfOptionsSchema = z.object({
+  outputFilename: z.string().optional().default("edited.pdf"),
+  annotations: z.array(z.record(z.unknown())).optional(),
+});
+export type EditPdfOptions = z.infer<typeof editPdfOptionsSchema>;
 
 export const TOOL_REGISTRY: Record<string, ToolDefinition> = {
   // Organize & Manage (Tahap 1 & Tahap 2)
@@ -621,6 +643,19 @@ export const TOOL_REGISTRY: Record<string, ToolDefinition> = {
     maxSizeMB: 100,
     available: true,
     optionsSchema: pdfFormsOptionsSchema,
+  },
+  "edit-pdf": {
+    slug: "edit-pdf",
+    name: "Edit PDF",
+    description: "Annotate, draw, add text, and edit PDF files.",
+    category: "edit",
+    icon: "Edit3",
+    accept: "application/pdf",
+    minFiles: 1,
+    maxFiles: 1,
+    maxSizeMB: 100,
+    available: true,
+    optionsSchema: editPdfOptionsSchema,
   },
 
   // Security

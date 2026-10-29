@@ -34,6 +34,7 @@ from recipes.add_page_numbers import add_page_numbers_recipe
 from recipes.add_watermark import add_watermark_recipe
 from recipes.crop_pdf import crop_pdf_recipe
 from recipes.pdf_forms import pdf_forms_recipe
+from recipes.edit_pdf import edit_pdf_recipe
 from recipes.compare_pdf import compare_pdf_recipe
 
 
@@ -183,6 +184,9 @@ def main():
         elif tool == "pdf-forms":
             tmp_output = tmpdir / out_name
             pdf_forms_recipe(local_input_paths[0], tmp_output, options)
+        elif tool == "edit-pdf":
+            tmp_output = tmpdir / out_name
+            edit_pdf_recipe(local_input_paths[0], tmp_output, options)
         elif tool == "compare-pdf":
             tmp_output = tmpdir / out_name
             compare_pdf_recipe(local_input_paths, tmp_output, options)
