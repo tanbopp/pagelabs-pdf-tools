@@ -5,6 +5,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
 import {
+  ToolLayout,
+  EmptyState,
   FileDropZone,
   PdfPagePreview,
   ProgressCard,
@@ -147,91 +149,21 @@ export default function ComparePdfPage() {
       <Header />
 
       {files.length === 0 ? (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-12 flex flex-col">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-8">
-            <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">Compare PDF</span>
-          </nav>
-
-          <div className="mb-12">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Compare PDF</h1>
-            <p className="text-base font-medium text-muted-foreground">Visually compare two PDF files side by side and highlight differences.</p>
-          </div>
-
-          <FileDropZone
-            accept="application/pdf"
-            maxFiles={2}
-            maxSizeMB={100}
-            onFiles={handleFiles}
-            disabled={status === "processing"}
-            title="Drop 2 PDF files to compare"
-            subtitle="Select the original and modified version"
-            formatName="PDF"
-          />
-        </main>
+        <EmptyState
+          title="Compare PDF"
+          description="Show a side-by-side comparison to find differences between two PDFs."
+          accept="application/pdf"
+          maxFiles={2}
+          maxSizeMB={100}
+          formatName="PDF"
+          onFiles={handleFiles}
+          disabled={status === "processing"}
+        />
       ) : (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-8 flex flex-col lg:flex-row items-start gap-8">
-          <section className="flex-1 w-full min-w-0">
-            <div className="flex items-center justify-between mb-6">
-              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-foreground">Compare PDF</span>
-              </nav>
-
-              <button
-                type="button"
-                onClick={handleReset}
-                className="h-9 px-4 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <RefreshCcw className="h-3.5 w-3.5" />
-                <span>Reset files</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {files.map((f, idx) => (
-                <div key={idx} className="flex flex-col gap-2">
-                  <span className="text-xs font-bold text-muted-foreground">
-                    Document {idx + 1}: {idx === 0 ? "Original" : "Modified"}
-                  </span>
-                  <div className="rounded-3xl border border-border bg-card p-6 flex flex-col items-center justify-center gap-3 aspect-[1/1.2]">
-                    <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-foreground">
-                      <FileText className="w-7 h-7" />
-                    </div>
-                    <div className="text-center w-full px-2">
-                      <p className="text-sm font-bold text-foreground truncate">{f.name}</p>
-                      <p className="text-xs font-medium text-muted-foreground mt-0.5">{(f.size / 1024).toFixed(1)} KB</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {files.length === 1 && (
-                <label className="border-2 border-dashed border-border hover:border-foreground/40 rounded-3xl p-6 flex flex-col items-center justify-center text-center cursor-pointer aspect-[1/1.2] transition-colors group">
-                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground mb-2">
-                    <span className="text-2xl font-bold">+</span>
-                  </div>
-                  <span className="text-xs font-bold text-foreground">Add Second Document</span>
-                  <span className="text-[11px] text-muted-foreground mt-0.5">PDF to compare against</span>
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files) {
-                        handleFiles(Array.from(e.target.files));
-                      }
-                    }}
-                  />
-                </label>
-              )}
-            </div>
-          </section>
-
-          <aside className="w-full lg:w-[380px] shrink-0 sticky top-6 flex flex-col gap-6">
-            <div className="rounded-3xl border border-border bg-card p-6 flex flex-col gap-6">
+        <ToolLayout
+          onReset={handleReset}
+          options={
+            <>
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-foreground">
                   <GitCompare className="w-4 h-4" />
@@ -281,9 +213,11 @@ export default function ComparePdfPage() {
                   onReset={handleReset}
                 />
               )}
-
-              {status !== "completed" && (
-                <button
+            </>
+          }
+          actionButton={
+            status !== "completed" ? (
+              <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={status === "processing" || files.length < 2}
@@ -292,10 +226,50 @@ export default function ComparePdfPage() {
                   <span>{status === "processing" ? "Comparing…" : "Compare PDFs"}</span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
+            ) : null
+          }
+        >
+          
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {files.map((f, idx) => (
+                <div key={idx} className="flex flex-col gap-2">
+                  <span className="text-xs font-bold text-muted-foreground">
+                    Document {idx + 1}: {idx === 0 ? "Original" : "Modified"}
+                  </span>
+                  <div className="rounded-3xl border border-border bg-card p-6 flex flex-col items-center justify-center gap-3 aspect-[1/1.2]">
+                    <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-foreground">
+                      <FileText className="w-7 h-7" />
+                    </div>
+                    <div className="text-center w-full px-2">
+                      <p className="text-sm font-bold text-foreground truncate">{f.name}</p>
+                      <p className="text-xs font-medium text-muted-foreground mt-0.5">{(f.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {files.length === 1 && (
+                <label className="border-2 border-dashed border-border hover:border-foreground/40 rounded-3xl p-6 flex flex-col items-center justify-center text-center cursor-pointer aspect-[1/1.2] transition-colors group">
+                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground mb-2">
+                    <span className="text-2xl font-bold">+</span>
+                  </div>
+                  <span className="text-xs font-bold text-foreground">Add Second Document</span>
+                  <span className="text-[11px] text-muted-foreground mt-0.5">PDF to compare against</span>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        handleFiles(Array.from(e.target.files));
+                      }
+                    }}
+                  />
+                </label>
               )}
             </div>
-          </aside>
-        </main>
+        </ToolLayout>
       )}
     </div>
   );

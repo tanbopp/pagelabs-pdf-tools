@@ -5,6 +5,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
 import {
+  ToolLayout,
+  EmptyState,
   FileDropZone,
   PdfPagePreview,
   ProgressCard,
@@ -158,60 +160,23 @@ export default function ExtractPagesPage() {
       <Header />
 
       {!file ? (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-12 flex flex-col">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-8">
-            <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">Extract Pages</span>
-          </nav>
-
-          <div className="mb-12">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Extract Pages</h1>
-            <p className="text-base font-medium text-muted-foreground">Keep only specific pages from your PDF.</p>
-          </div>
-
-          <FileDropZone
-            accept="application/pdf"
-            maxFiles={1}
-            maxSizeMB={100}
-            onFiles={handleFile}
-            disabled={status === "processing"}
-          />
-        </main>
+        <EmptyState
+          title="Extract Pages"
+          description="Extract selected pages from your PDF file into a new document."
+          accept="application/pdf"
+          maxFiles={1}
+          maxSizeMB={100}
+          formatName="PDF"
+          onFiles={handleFile}
+          disabled={status === "processing"}
+        />
       ) : (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-8 flex flex-col lg:flex-row gap-10 items-start">
-          <section className="flex-1 w-full flex flex-col gap-6">
-            <div className="flex items-center justify-between">
-              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-foreground">Extract Pages</span>
-              </nav>
-
-              <button
-                type="button"
-                onClick={handleReset}
-                className="h-9 px-4 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <RefreshCcw className="h-3.5 w-3.5" />
-                <span>Change file</span>
-              </button>
-            </div>
-
-            <div className="max-w-sm">
-              <PdfPagePreview
-                file={file}
-                index={0}
-                onRemove={handleReset}
-              />
-            </div>
-          </section>
-
-          <aside className="w-full lg:w-[380px] shrink-0 sticky top-6 flex flex-col gap-6">
-            <div className="rounded-3xl border border-border bg-card p-6 flex flex-col gap-6">
+        <ToolLayout
+          onReset={handleReset}
+          options={
+            <>
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">Extract Pages</h2>
-                <p className="text-xs font-medium text-muted-foreground">Specify the pages to keep.</p>
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">Extract Pages</h2>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -297,9 +262,11 @@ export default function ExtractPagesPage() {
                   onReset={handleReset}
                 />
               )}
-
-              {status !== "completed" && (
-                <button
+            </>
+          }
+          actionButton={
+            status !== "completed" ? (
+              <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={status === "processing" || !pagesStr.trim() || !!pagesError}
@@ -314,10 +281,29 @@ export default function ExtractPagesPage() {
                   </span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
-              )}
+            ) : null
+          }
+        >
+          <div className="flex items-center justify-between">
+
+              <button
+                type="button"
+                onClick={handleReset}
+                className="h-9 px-4 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <RefreshCcw className="h-3.5 w-3.5" />
+                <span>Change file</span>
+              </button>
             </div>
-          </aside>
-        </main>
+
+            <div className="w-full max-w-sm flex items-center justify-center">
+              <PdfPagePreview
+                file={file}
+                index={0}
+                onRemove={handleReset}
+              />
+            </div>
+        </ToolLayout>
       )}
     </div>
   );

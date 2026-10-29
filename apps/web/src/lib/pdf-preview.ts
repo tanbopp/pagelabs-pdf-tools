@@ -9,8 +9,12 @@ async function getPdfJs() {
   const pdfjs = await import("pdfjs-dist");
   
   if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-    // Use unpkg / cdnjs worker matching pdfjs-dist version
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    // Prefer local served worker to avoid external CDN network blocks / CORS errors
+    if (typeof window !== "undefined") {
+      pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+    } else {
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    }
   }
 
   pdfjsLib = pdfjs;

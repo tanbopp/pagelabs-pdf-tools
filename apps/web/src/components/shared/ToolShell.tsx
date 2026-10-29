@@ -21,15 +21,6 @@ export function ToolShell({
       <Header />
 
       <main className="flex-1 max-w-2xl w-full mx-auto px-6 py-12 flex flex-col">
-        {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-8">
-          <Link href="/" className="hover:text-foreground transition-colors">
-            Tools
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground">{title}</span>
-        </nav>
-
         {/* Title & Description */}
         <div className="mb-12">
           <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">

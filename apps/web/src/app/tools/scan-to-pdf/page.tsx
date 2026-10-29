@@ -5,6 +5,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
 import {
+  ToolLayout,
+  EmptyState,
   FileDropZone,
   ProgressCard,
   ResultCard,
@@ -156,101 +158,23 @@ export default function ScanToPdfPage() {
       <Header />
 
       {files.length === 0 ? (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-12 flex flex-col">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-8">
-            <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">Scan to PDF</span>
-          </nav>
-
-          <div className="mb-12">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Scan to PDF</h1>
-            <p className="text-base font-medium text-muted-foreground">Convert paper document photos and scans into a clean PDF.</p>
-          </div>
-
-          <FileDropZone
-            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-            maxFiles={30}
-            maxSizeMB={100}
-            onFiles={handleFiles}
-            disabled={status === "processing"}
-            title="Drop scanned photos here"
-            subtitle="or click to browse multiple photos"
-            formatName="JPG, PNG"
-          />
-        </main>
+        <EmptyState
+          title="Scan to PDF"
+          description="Capture document scans from mobile or web camera into crisp PDF."
+          accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+          maxFiles={30}
+          maxSizeMB={100}
+          formatName="image"
+          onFiles={handleFiles}
+          disabled={status === "processing"}
+        />
       ) : (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-8 flex flex-col lg:flex-row items-start gap-8">
-          <section className="flex-1 w-full min-w-0">
-            <div className="flex items-center justify-between mb-6">
-              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-foreground">Scan to PDF</span>
-              </nav>
-
-              <button
-                type="button"
-                onClick={handleReset}
-                className="h-9 px-4 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <RefreshCcw className="h-3.5 w-3.5" />
-                <span>Reset all</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {files.map((f, idx) => (
-                <div
-                  key={idx}
-                  className="relative group rounded-3xl border border-border bg-card p-4 flex flex-col items-center justify-center aspect-square text-center"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-foreground mb-2">
-                    <ImageIcon className="w-6 h-6 text-foreground/80" />
-                  </div>
-                  <span className="text-xs font-bold text-foreground truncate w-full px-1">
-                    {f.name}
-                  </span>
-                  <span className="text-[11px] font-medium text-muted-foreground mt-0.5">
-                    {(f.size / 1024).toFixed(0)} KB
-                  </span>
-
-                  <button
-                    onClick={() => handleRemoveFile(idx)}
-                    className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-
-              <label className="border-2 border-dashed border-border hover:border-foreground/40 rounded-3xl p-4 flex flex-col items-center justify-center aspect-square text-center cursor-pointer transition-colors group">
-                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground mb-1.5">
-                  <span className="text-xl font-bold">+</span>
-                </div>
-                <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground">
-                  Add more
-                </span>
-                <input
-                  type="file"
-                  multiple
-                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files) {
-                      handleFiles(Array.from(e.target.files));
-                    }
-                  }}
-                />
-              </label>
-            </div>
-          </section>
-
-          <aside className="w-full lg:w-[380px] shrink-0 sticky top-6 flex flex-col gap-6">
-            <div className="rounded-3xl border border-border bg-card p-6 flex flex-col gap-6">
+        <ToolLayout
+          onReset={handleReset}
+          options={
+            <>
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">Scan Options</h2>
-                <p className="text-xs font-medium text-muted-foreground">Adjust deskew enhancement.</p>
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">Scan Options</h2>
               </div>
 
               {/* Auto Deskew Toggle */}
@@ -309,9 +233,11 @@ export default function ScanToPdfPage() {
                   onReset={handleReset}
                 />
               )}
-
-              {status !== "completed" && (
-                <button
+            </>
+          }
+          actionButton={
+            status !== "completed" ? (
+              <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={status === "processing" || files.length === 0}
@@ -320,10 +246,57 @@ export default function ScanToPdfPage() {
                   <span>{status === "processing" ? "Converting…" : "Convert to PDF"}</span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
-              )}
+            ) : null
+          }
+        >
+          
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {files.map((f, idx) => (
+                <div
+                  key={idx}
+                  className="relative group rounded-3xl border border-border bg-card p-4 flex flex-col items-center justify-center aspect-square text-center"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-foreground mb-2">
+                    <ImageIcon className="w-6 h-6 text-foreground/80" />
+                  </div>
+                  <span className="text-xs font-bold text-foreground truncate w-full px-1">
+                    {f.name}
+                  </span>
+                  <span className="text-[11px] font-medium text-muted-foreground mt-0.5">
+                    {(f.size / 1024).toFixed(0)} KB
+                  </span>
+
+                  <button
+                    onClick={() => handleRemoveFile(idx)}
+                    className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+
+              <label className="border-2 border-dashed border-border hover:border-foreground/40 rounded-3xl p-4 flex flex-col items-center justify-center aspect-square text-center cursor-pointer transition-colors group">
+                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground mb-1.5">
+                  <span className="text-xl font-bold">+</span>
+                </div>
+                <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground">
+                  Add more
+                </span>
+                <input
+                  type="file"
+                  multiple
+                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      handleFiles(Array.from(e.target.files));
+                    }
+                  }}
+                />
+              </label>
             </div>
-          </aside>
-        </main>
+        </ToolLayout>
       )}
     </div>
   );

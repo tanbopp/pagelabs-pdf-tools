@@ -1,10 +1,14 @@
 import path from "node:path";
 import fs from "node:fs";
 import crypto from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
 
-// Local storage directory
-const storageDir = path.resolve(process.cwd(), "storage");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Local storage directory always under apps/api/storage
+const storageDir = path.resolve(__dirname, "../storage");
 const uploadsDir = path.join(storageDir, "uploads");
 const resultsDir = path.join(storageDir, "results");
 

@@ -1,7 +1,6 @@
 import { Header, Footer } from "@/components/layout-shell";
 import { ToolCard } from "@/components/shared";
 import { TOOL_REGISTRY, TOOL_CATEGORIES } from "@pagelabs/shared";
-import { getToolIcon } from "@/lib/icons";
 
 export default function HomePage() {
   const allTools = Object.values(TOOL_REGISTRY);
@@ -42,8 +41,9 @@ export default function HomePage() {
                       slug={tool.slug}
                       name={tool.name}
                       description={tool.description}
-                      icon={getToolIcon(tool.icon)}
+                      iconName={tool.icon}
                       available={tool.available}
+                      category={tool.category}
                     />
                   ))}
                 </div>

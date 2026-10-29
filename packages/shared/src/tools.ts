@@ -81,7 +81,9 @@ export type RotatePdfOptions = z.infer<typeof rotatePdfOptionsSchema>;
 export const organizePdfOptionsSchema = z.object({
   pages: z.array(
     z.object({
-      originalIndex: z.number().int().nonnegative(),
+      fileId: z.string().optional().default(""), // file identifier or "blank"
+      fileIndex: z.number().int().optional().default(0), // index into files array
+      originalIndex: z.number().int().default(0),
       rotation: z.number().int().default(0),
     })
   ).min(1, "At least one page must remain"),
@@ -360,7 +362,7 @@ export const TOOL_REGISTRY: Record<string, ToolDefinition> = {
     icon: "Layers",
     accept: "application/pdf",
     minFiles: 1,
-    maxFiles: 1,
+    maxFiles: 20,
     maxSizeMB: 100,
     available: true,
     optionsSchema: organizePdfOptionsSchema,

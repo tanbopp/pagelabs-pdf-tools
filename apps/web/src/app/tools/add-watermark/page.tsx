@@ -5,6 +5,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
 import {
+  ToolLayout,
+  EmptyState,
   FileDropZone,
   ProgressCard,
   ResultCard,
@@ -324,247 +326,21 @@ export default function AddWatermarkPage() {
       <Header />
 
       {!file ? (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-12 flex flex-col overflow-y-auto">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-8">
-            <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">Watermark</span>
-          </nav>
-
-          <div className="mb-12">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Add Watermark</h1>
-            <p className="text-base font-medium text-muted-foreground">Stamp an image or text watermark over your PDF with full formatting control.</p>
-          </div>
-
-          <FileDropZone
-            accept="application/pdf"
-            maxFiles={1}
-            maxSizeMB={100}
-            onFiles={handleFile}
-            disabled={status === "processing"}
-          />
-        </main>
+        <EmptyState
+          title="Add Watermark"
+          description="Stamp an image or text over your PDF pages in seconds."
+          accept="application/pdf"
+          maxFiles={1}
+          maxSizeMB={100}
+          formatName="PDF"
+          onFiles={handleFile}
+          disabled={status === "processing"}
+        />
       ) : (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-4 flex flex-col lg:flex-row items-stretch gap-6 overflow-hidden min-h-0">
-          <section className="flex-1 w-full min-w-0 flex flex-col min-h-0 h-full">
-            <div className="flex items-center justify-between mb-3 shrink-0">
-              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-foreground">Watermark</span>
-              </nav>
-
-              <div className="flex items-center gap-3">
-                {/* Zoom Controls */}
-                <div className="flex items-center gap-1.5 bg-secondary/80 rounded-full p-1 border border-border/60">
-                  <button
-                    type="button"
-                    onClick={() => setZoomLevel((prev) => Math.max(60, prev - 10))}
-                    disabled={zoomLevel <= 60}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors disabled:opacity-40 cursor-pointer"
-                    title="Zoom Out"
-                  >
-                    <ZoomOut className="w-3.5 h-3.5" />
-                  </button>
-                  <span className="text-[11px] font-bold px-1.5 min-w-[3rem] text-center select-none text-foreground">
-                    {zoomLevel}%
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setZoomLevel((prev) => Math.min(140, prev + 10))}
-                    disabled={zoomLevel >= 140}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors disabled:opacity-40 cursor-pointer"
-                    title="Zoom In"
-                  >
-                    <ZoomIn className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="h-9 px-4 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <RefreshCcw className="h-3.5 w-3.5" />
-                  <span>Change file</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Document Viewer Canvas Area */}
-            <div className="relative w-full flex-1 rounded-2xl bg-neutral-200/70 dark:bg-neutral-950/80 border border-neutral-300 dark:border-neutral-800 p-4 sm:p-8 flex flex-col items-center justify-start overflow-auto min-h-0">
-              {isPreviewLoading && (
-                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-background/60 backdrop-blur-xs">
-                  <Loader2 className="w-7 h-7 animate-spin text-primary" />
-                  <span className="text-xs font-semibold text-muted-foreground">Rendering PDF document pages…</span>
-                </div>
-              )}
-
-              <div
-                style={{
-                  transform: `scale(${zoomLevel / 100})`,
-                  transformOrigin: "top center",
-                }}
-                className="transition-transform duration-200 ease-out flex flex-col items-center gap-6 w-full py-2"
-              >
-                {pages.length > 0 ? (
-                  pages.map((p) => {
-                    const isWithinPageRange = p.pageNumber >= fromPage && p.pageNumber <= toPage;
-                    return (
-                      <div
-                        key={p.pageNumber}
-                        className="relative bg-white text-neutral-900 shadow-xl rounded-none border border-neutral-300 dark:border-neutral-700 overflow-hidden select-none"
-                        style={{
-                          width: "600px",
-                          maxWidth: "100%",
-                          aspectRatio: `${p.width} / ${p.height}`,
-                        }}
-                      >
-                        {/* Rendered PDF Page Image */}
-                        <img
-                          src={p.dataUrl}
-                          alt={`Page ${p.pageNumber}`}
-                          className={`w-full h-full object-contain pointer-events-none select-none block ${
-                            layer === "below" ? "relative z-10" : ""
-                          }`}
-                        />
-
-                        {/* LIVE WATERMARK OVERLAY LAYER */}
-                        {isWithinPageRange && (
-                          <div
-                            className={`absolute inset-0 pointer-events-none z-10 overflow-hidden ${
-                              layer === "below" ? "!z-0 opacity-80" : ""
-                            }`}
-                          >
-                            {mosaic ? (
-                              /* Mosaic 3x4 Grid matching backend cols=3 rows=4 */
-                              <div className="w-full h-full grid grid-cols-3 grid-rows-4">
-                                {Array.from({ length: 12 }).map((_, i) => (
-                                  <div key={i} className="flex items-center justify-center overflow-hidden">
-                                    {type === "text" ? (
-                                      <span
-                                        className="tracking-wider text-center select-none whitespace-nowrap"
-                                        style={{
-                                          opacity,
-                                          color,
-                                          fontFamily: fontFamily === "Times-Roman" ? "Times New Roman, serif" : fontFamily === "Courier" ? "Courier New, monospace" : "Helvetica, Arial, sans-serif",
-                                          fontWeight: isBold ? 800 : 400,
-                                          fontStyle: isItalic ? "italic" : "normal",
-                                          textDecoration: isUnderline ? "underline" : "none",
-                                          fontSize: `${fontSize * 0.98}px`,
-                                          transform: `rotate(${rotation}deg)`,
-                                        }}
-                                      >
-                                        {text || "WATERMARK"}
-                                      </span>
-                                    ) : imageBase64 ? (
-                                      <img
-                                        src={imageBase64}
-                                        alt="Watermark"
-                                        className="w-24 h-24 object-contain"
-                                        style={{ opacity, transform: `rotate(${rotation}deg)` }}
-                                      />
-                                    ) : null}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              /* 9-Point Grid Positioned */
-                              (() => {
-                                const align = getGridAlignment(position);
-                                return (
-                                  <div
-                                    className="w-full h-full flex transition-all duration-150 ease-out"
-                                    style={{
-                                      justifyContent: align.justify,
-                                      alignItems: align.align,
-                                      padding: align.p,
-                                    }}
-                                  >
-                                    {type === "text" ? (
-                                      <span
-                                        className="tracking-wider text-center select-none transition-all duration-150"
-                                        style={{
-                                          opacity,
-                                          color,
-                                          fontFamily: fontFamily === "Times-Roman" ? "Times New Roman, serif" : fontFamily === "Courier" ? "Courier New, monospace" : "Helvetica, Arial, sans-serif",
-                                          fontWeight: isBold ? 800 : 400,
-                                          fontStyle: isItalic ? "italic" : "normal",
-                                          textDecoration: isUnderline ? "underline" : "none",
-                                          fontSize: `${fontSize * 0.98}px`,
-                                          transform: `rotate(${rotation}deg)`,
-                                          lineHeight: 1.15,
-                                          maxWidth: "90%",
-                                          wordBreak: "break-word",
-                                        }}
-                                      >
-                                        {text || "WATERMARK"}
-                                      </span>
-                                    ) : imageBase64 ? (
-                                      <img
-                                        src={imageBase64}
-                                        alt="Watermark"
-                                        className="w-48 h-48 object-contain transition-opacity select-none"
-                                        style={{ opacity, transform: `rotate(${rotation}deg)` }}
-                                      />
-                                    ) : (
-                                      <div
-                                        className="w-36 h-36 rounded-xl border-2 border-dashed border-neutral-400 flex flex-col items-center justify-center p-3 text-center"
-                                        style={{ opacity }}
-                                      >
-                                        <Upload className="w-6 h-6 text-neutral-500 mb-1" />
-                                        <span className="text-[11px] font-bold text-neutral-600">
-                                          Upload Image
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })()
-                            )}
-                          </div>
-                        )}
-
-                        {/* Subtle Page Indicator in viewer corner */}
-                        <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/40 text-white text-[10px] font-medium backdrop-blur-xs select-none pointer-events-none">
-                          {p.pageNumber} / {pages.length}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div
-                    className="relative bg-white text-neutral-900 shadow-xl rounded-none border border-neutral-300 dark:border-neutral-700 overflow-hidden select-none"
-                    style={{
-                      width: "600px",
-                      maxWidth: "100%",
-                      aspectRatio: "1 / 1.4142",
-                    }}
-                  >
-                    <div className="w-full h-full p-8 flex flex-col justify-between bg-white text-neutral-400">
-                      <div className="flex items-center gap-2 border-b border-neutral-200 pb-3">
-                        <FileText className="w-5 h-5 text-neutral-400" />
-                        <div className="h-3 w-32 bg-neutral-200 rounded" />
-                      </div>
-                      <div className="space-y-4 py-8">
-                        <div className="h-3 w-3/4 bg-neutral-200 rounded" />
-                        <div className="h-3 w-full bg-neutral-200 rounded" />
-                        <div className="h-3 w-5/6 bg-neutral-200 rounded" />
-                      </div>
-                      <div className="border-t border-neutral-200 pt-3 flex justify-between text-xs text-neutral-400">
-                        <span>Page 1</span>
-                        <span>Document</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* RIGHT ASIDE OPTIONS PANEL */}
-          <aside className="w-full lg:w-[410px] shrink-0 flex flex-col min-h-0 h-full overflow-y-auto">
-            <div className="rounded-3xl border border-border bg-card p-6 flex flex-col gap-6">
+        <ToolLayout
+          onReset={handleReset}
+          options={
+            <>
               {/* Header Tab Selector: Place text vs Place image */}
               <div className="grid grid-cols-2 rounded-2xl border border-border bg-secondary/50 p-1">
                 <button
@@ -890,9 +666,11 @@ export default function AddWatermarkPage() {
                   onReset={handleReset}
                 />
               )}
-
-              {status !== "completed" && (
-                <button
+            </>
+          }
+          actionButton={
+            status !== "completed" ? (
+              <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={status === "processing"}
@@ -901,10 +679,218 @@ export default function AddWatermarkPage() {
                   <span>{status === "processing" ? "Stamping…" : "Add Watermark"}</span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
-              )}
+            ) : null
+          }
+        >
+          <div className="flex items-center justify-between mb-3 shrink-0">
+
+              <div className="flex items-center gap-3">
+                {/* Zoom Controls */}
+                <div className="flex items-center gap-1.5 bg-secondary/80 rounded-full p-1 border border-border/60">
+                  <button
+                    type="button"
+                    onClick={() => setZoomLevel((prev) => Math.max(60, prev - 10))}
+                    disabled={zoomLevel <= 60}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors disabled:opacity-40 cursor-pointer"
+                    title="Zoom Out"
+                  >
+                    <ZoomOut className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="text-[11px] font-bold px-1.5 min-w-[3rem] text-center select-none text-foreground">
+                    {zoomLevel}%
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setZoomLevel((prev) => Math.min(140, prev + 10))}
+                    disabled={zoomLevel >= 140}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors disabled:opacity-40 cursor-pointer"
+                    title="Zoom In"
+                  >
+                    <ZoomIn className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="h-9 px-4 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <RefreshCcw className="h-3.5 w-3.5" />
+                  <span>Change file</span>
+                </button>
+              </div>
             </div>
-          </aside>
-        </main>
+
+            {/* Document Viewer Canvas Area */}
+            <div className="relative w-full flex-1 rounded-2xl bg-neutral-200/70 dark:bg-neutral-950/80 border border-neutral-300 dark:border-neutral-800 p-4 sm:p-8 flex flex-col items-center justify-start overflow-auto min-h-0">
+              {isPreviewLoading && (
+                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-background/60 backdrop-blur-xs">
+                  <Loader2 className="w-7 h-7 animate-spin text-primary" />
+                  <span className="text-xs font-semibold text-muted-foreground">Rendering PDF document pages…</span>
+                </div>
+              )}
+
+              <div
+                style={{
+                  transform: `scale(${zoomLevel / 100})`,
+                  transformOrigin: "top center",
+                }}
+                className="transition-transform duration-200 ease-out flex flex-col items-center gap-6 w-full py-2"
+              >
+                {pages.length > 0 ? (
+                  pages.map((p) => {
+                    const isWithinPageRange = p.pageNumber >= fromPage && p.pageNumber <= toPage;
+                    return (
+                      <div
+                        key={p.pageNumber}
+                        className="relative bg-white text-neutral-900 shadow-xl rounded-none border border-neutral-300 dark:border-neutral-700 overflow-hidden select-none"
+                        style={{
+                          width: "600px",
+                          maxWidth: "100%",
+                          aspectRatio: `${p.width} / ${p.height}`,
+                        }}
+                      >
+                        {/* Rendered PDF Page Image */}
+                        <img
+                          src={p.dataUrl}
+                          alt={`Page ${p.pageNumber}`}
+                          className={`w-full h-full object-contain pointer-events-none select-none block ${
+                            layer === "below" ? "relative z-10" : ""
+                          }`}
+                        />
+
+                        {/* LIVE WATERMARK OVERLAY LAYER */}
+                        {isWithinPageRange && (
+                          <div
+                            className={`absolute inset-0 pointer-events-none z-10 overflow-hidden ${
+                              layer === "below" ? "!z-0 opacity-80" : ""
+                            }`}
+                          >
+                            {mosaic ? (
+                              /* Mosaic 3x4 Grid matching backend cols=3 rows=4 */
+                              <div className="w-full h-full grid grid-cols-3 grid-rows-4">
+                                {Array.from({ length: 12 }).map((_, i) => (
+                                  <div key={i} className="flex items-center justify-center overflow-hidden">
+                                    {type === "text" ? (
+                                      <span
+                                        className="tracking-wider text-center select-none whitespace-nowrap"
+                                        style={{
+                                          opacity,
+                                          color,
+                                          fontFamily: fontFamily === "Times-Roman" ? "Times New Roman, serif" : fontFamily === "Courier" ? "Courier New, monospace" : "Helvetica, Arial, sans-serif",
+                                          fontWeight: isBold ? 800 : 400,
+                                          fontStyle: isItalic ? "italic" : "normal",
+                                          textDecoration: isUnderline ? "underline" : "none",
+                                          fontSize: `${fontSize * 0.98}px`,
+                                          transform: `rotate(${rotation}deg)`,
+                                        }}
+                                      >
+                                        {text || "WATERMARK"}
+                                      </span>
+                                    ) : imageBase64 ? (
+                                      <img
+                                        src={imageBase64}
+                                        alt="Watermark"
+                                        className="w-24 h-24 object-contain"
+                                        style={{ opacity, transform: `rotate(${rotation}deg)` }}
+                                      />
+                                    ) : null}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              /* 9-Point Grid Positioned */
+                              (() => {
+                                const align = getGridAlignment(position);
+                                return (
+                                  <div
+                                    className="w-full h-full flex transition-all duration-150 ease-out"
+                                    style={{
+                                      justifyContent: align.justify,
+                                      alignItems: align.align,
+                                      padding: align.p,
+                                    }}
+                                  >
+                                    {type === "text" ? (
+                                      <span
+                                        className="tracking-wider text-center select-none transition-all duration-150"
+                                        style={{
+                                          opacity,
+                                          color,
+                                          fontFamily: fontFamily === "Times-Roman" ? "Times New Roman, serif" : fontFamily === "Courier" ? "Courier New, monospace" : "Helvetica, Arial, sans-serif",
+                                          fontWeight: isBold ? 800 : 400,
+                                          fontStyle: isItalic ? "italic" : "normal",
+                                          textDecoration: isUnderline ? "underline" : "none",
+                                          fontSize: `${fontSize * 0.98}px`,
+                                          transform: `rotate(${rotation}deg)`,
+                                          lineHeight: 1.15,
+                                          maxWidth: "90%",
+                                          wordBreak: "break-word",
+                                        }}
+                                      >
+                                        {text || "WATERMARK"}
+                                      </span>
+                                    ) : imageBase64 ? (
+                                      <img
+                                        src={imageBase64}
+                                        alt="Watermark"
+                                        className="w-48 h-48 object-contain transition-opacity select-none"
+                                        style={{ opacity, transform: `rotate(${rotation}deg)` }}
+                                      />
+                                    ) : (
+                                      <div
+                                        className="w-36 h-36 rounded-xl border-2 border-dashed border-neutral-400 flex flex-col items-center justify-center p-3 text-center"
+                                        style={{ opacity }}
+                                      >
+                                        <Upload className="w-6 h-6 text-neutral-500 mb-1" />
+                                        <span className="text-[11px] font-bold text-neutral-600">
+                                          Upload Image
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()
+                            )}
+                          </div>
+                        )}
+
+                        {/* Subtle Page Indicator in viewer corner */}
+                        <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/40 text-white text-[10px] font-medium backdrop-blur-xs select-none pointer-events-none">
+                          {p.pageNumber} / {pages.length}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div
+                    className="relative bg-white text-neutral-900 shadow-xl rounded-none border border-neutral-300 dark:border-neutral-700 overflow-hidden select-none"
+                    style={{
+                      width: "600px",
+                      maxWidth: "100%",
+                      aspectRatio: "1 / 1.4142",
+                    }}
+                  >
+                    <div className="w-full h-full p-8 flex flex-col justify-between bg-white text-neutral-400">
+                      <div className="flex items-center gap-2 border-b border-neutral-200 pb-3">
+                        <FileText className="w-5 h-5 text-neutral-400" />
+                        <div className="h-3 w-32 bg-neutral-200 rounded" />
+                      </div>
+                      <div className="space-y-4 py-8">
+                        <div className="h-3 w-3/4 bg-neutral-200 rounded" />
+                        <div className="h-3 w-full bg-neutral-200 rounded" />
+                        <div className="h-3 w-5/6 bg-neutral-200 rounded" />
+                      </div>
+                      <div className="border-t border-neutral-200 pt-3 flex justify-between text-xs text-neutral-400">
+                        <span>Page 1</span>
+                        <span>Document</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+        </ToolLayout>
       )}
     </div>
   );

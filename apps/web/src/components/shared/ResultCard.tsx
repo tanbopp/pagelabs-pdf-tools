@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, Download, RotateCcw } from "lucide-react";
+import { HugeDownload, HugeRefresh, HugeCheck } from "@/components/icons";
 
 export interface ResultCardProps {
   filename: string;
@@ -32,7 +32,7 @@ export function ResultCard({
     <div className="rounded-3xl border border-border bg-card p-6 flex flex-col gap-5 text-foreground">
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-full border border-border bg-secondary flex items-center justify-center shrink-0">
-          <Check className="h-4 w-4 text-foreground" />
+          <HugeCheck size={16} className="text-foreground" />
         </div>
         <div className="text-base font-semibold leading-tight">Your file is ready</div>
       </div>
@@ -47,7 +47,7 @@ export function ResultCard({
           download={filename}
           className="w-full h-11 px-5 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap"
         >
-          <Download className="h-4 w-4 shrink-0" />
+          <HugeDownload size={16} className="shrink-0" />
           <span>Download PDF</span>
         </a>
 
@@ -56,7 +56,7 @@ export function ResultCard({
           onClick={onReset}
           className="w-full h-11 px-5 rounded-full border border-border bg-transparent text-foreground text-xs font-semibold flex items-center justify-center gap-2 hover:bg-secondary transition-colors whitespace-nowrap"
         >
-          <RotateCcw className="h-3.5 w-3.5 shrink-0" />
+          <HugeRefresh size={14} className="shrink-0" />
           <span>Process another</span>
         </button>
       </div>

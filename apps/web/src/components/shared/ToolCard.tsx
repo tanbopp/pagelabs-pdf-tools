@@ -1,23 +1,45 @@
 import React from "react";
 import Link from "next/link";
-import { type LucideIcon } from "lucide-react";
+import { AppIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 export interface ToolCardProps {
   slug: string;
   name: string;
   description: string;
-  icon: LucideIcon;
+  iconName: string;
   available: boolean;
+  category?: string;
 }
+
+const CATEGORY_COLOR_MAP: Record<string, string> = {
+  // 1. Organize & Manage (Biru)
+  organize: "text-blue-500 dark:text-blue-400",
+  // 2. Optimize & Repair (Hijau)
+  optimize: "text-emerald-500 dark:text-emerald-400",
+  // 3. Convert To PDF (Kuning/Oranye)
+  "convert-to": "text-amber-500 dark:text-amber-400",
+  // 4. Convert From PDF (Ungu)
+  "convert-from": "text-violet-500 dark:text-violet-400",
+  // 5. Edit PDF (Pink/Rose)
+  edit: "text-rose-500 dark:text-rose-400",
+  // 6. PDF Security (Merah Gelap / Crimson)
+  security: "text-red-500 dark:text-red-400",
+  // 7. PDF Intelligence / AI (Cyan/Teal)
+  ai: "text-cyan-500 dark:text-cyan-400",
+};
 
 export function ToolCard({
   slug,
   name,
   description,
-  icon: Icon,
+  iconName,
   available,
+  category,
 }: ToolCardProps) {
+  const iconColorClass =
+    (category && CATEGORY_COLOR_MAP[category]) || "text-foreground";
+
   const content = (
     <div
       className={cn(
@@ -28,7 +50,12 @@ export function ToolCard({
       )}
     >
       <div className="flex items-start justify-between">
-        <Icon className="h-6 w-6 text-foreground" />
+        <AppIcon
+          name={iconName}
+          size={26}
+          strokeWidth={1.8}
+          className={cn("transition-colors duration-200", iconColorClass)}
+        />
         {!available && (
           <span className="rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
             Coming soon

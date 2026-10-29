@@ -1,5 +1,5 @@
 import React from "react";
-import { FileText, X } from "lucide-react";
+import { HugePdfFile, HugeClose } from "@/components/icons";
 import { toast } from "sonner";
 
 export interface FileChipProps {
@@ -28,7 +28,7 @@ export function FileChip({
       className="rounded-full border border-border bg-card px-4 py-2 flex items-center justify-between gap-3 text-foreground"
     >
       <div className="flex items-center gap-2.5 min-w-0">
-        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <HugePdfFile size={16} className="shrink-0 text-muted-foreground" />
         <span className="text-sm font-semibold truncate max-w-[240px]">
           {file.name}
         </span>
@@ -45,9 +45,9 @@ export function FileChip({
           onRemove();
         }}
         aria-label={`Remove ${file.name}`}
-        className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+        className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
       >
-        <X className="h-4 w-4" />
+        <HugeClose size={15} />
       </button>
     </div>
   );

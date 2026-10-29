@@ -5,6 +5,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
 import {
+  ToolLayout,
+  EmptyState,
   FileDropZone,
   ProgressCard,
   ResultCard,
@@ -149,65 +151,23 @@ export default function PowerpointToPdfPage() {
       <Header />
 
       {!file ? (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-12 flex flex-col">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-8">
-            <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">PowerPoint to PDF</span>
-          </nav>
-
-          <div className="mb-12">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">PowerPoint to PDF</h1>
-            <p className="text-base font-medium text-muted-foreground">Convert PPTX and PPT presentations to pristine PDF documents.</p>
-          </div>
-
-          <FileDropZone
-            accept=".pptx,.ppt,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
-            maxFiles={1}
-            maxSizeMB={100}
-            onFiles={handleFile}
-            disabled={status === "processing"}
-            title="Drop PPTX or PPT here"
-            subtitle="or click to browse PowerPoint presentations"
-            formatName="PPTX, PPT"
-          />
-        </main>
+        <EmptyState
+          title="PowerPoint to PDF"
+          description="Make PPTX presentations easy to view by converting them to PDF."
+          accept=".pptx,.ppt,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+          maxFiles={1}
+          maxSizeMB={100}
+          formatName="PowerPoint"
+          onFiles={handleFile}
+          disabled={status === "processing"}
+        />
       ) : (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-8 flex flex-col lg:flex-row items-start gap-8">
-          <section className="flex-1 w-full min-w-0">
-            <div className="flex items-center justify-between mb-6">
-              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-foreground">PowerPoint to PDF</span>
-              </nav>
-
-              <button
-                type="button"
-                onClick={handleReset}
-                className="h-9 px-4 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <RefreshCcw className="h-3.5 w-3.5" />
-                <span>Change file</span>
-              </button>
-            </div>
-
-            <div className="max-w-sm rounded-3xl border border-border bg-card p-6 flex flex-col items-center justify-center gap-4 aspect-[1/1.3]">
-              <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center text-foreground">
-                <Presentation className="w-8 h-8" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-bold text-foreground truncate max-w-[240px]">{file.name}</p>
-                <p className="text-xs font-medium text-muted-foreground mt-1">{(file.size / 1024).toFixed(1)} KB</p>
-              </div>
-            </div>
-          </section>
-
-          <aside className="w-full lg:w-[380px] shrink-0 sticky top-6 flex flex-col gap-6">
-            <div className="rounded-3xl border border-border bg-card p-6 flex flex-col gap-6">
+        <ToolLayout
+          onReset={handleReset}
+          options={
+            <>
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">Convert Options</h2>
-                <p className="text-xs font-medium text-muted-foreground">Preserve slide layout and visual elements.</p>
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">Convert Options</h2>
               </div>
 
               <div className="p-4 rounded-2xl bg-secondary/50 border border-border text-xs font-medium text-muted-foreground leading-relaxed">
@@ -248,9 +208,11 @@ export default function PowerpointToPdfPage() {
                   onReset={handleReset}
                 />
               )}
-
-              {status !== "completed" && (
-                <button
+            </>
+          }
+          actionButton={
+            status !== "completed" ? (
+              <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={status === "processing"}
@@ -259,10 +221,21 @@ export default function PowerpointToPdfPage() {
                   <span>{status === "processing" ? "Converting…" : "Convert to PDF"}</span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
-              )}
+            ) : null
+          }
+        >
+          
+
+            <div className="max-w-sm rounded-3xl border border-border bg-card p-6 flex flex-col items-center justify-center gap-4 aspect-[1/1.3]">
+              <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center text-foreground">
+                <Presentation className="w-8 h-8" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-bold text-foreground truncate max-w-[240px]">{file.name}</p>
+                <p className="text-xs font-medium text-muted-foreground mt-1">{(file.size / 1024).toFixed(1)} KB</p>
+              </div>
             </div>
-          </aside>
-        </main>
+        </ToolLayout>
       )}
     </div>
   );

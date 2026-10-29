@@ -5,6 +5,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
 import {
+  ToolLayout,
+  EmptyState,
   FileDropZone,
   PdfPagePreview,
   ProgressCard,
@@ -172,96 +174,21 @@ export default function AddPageNumbersPage() {
       <Header />
 
       {!file ? (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-12 flex flex-col">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-8">
-            <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">Page Numbers</span>
-          </nav>
-
-          <div className="mb-12">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Add Page Numbers</h1>
-            <p className="text-base font-medium text-muted-foreground">Add customized page numbering into your PDF documents.</p>
-          </div>
-
-          <FileDropZone
-            accept="application/pdf"
-            maxFiles={1}
-            maxSizeMB={100}
-            onFiles={handleFile}
-            disabled={status === "processing"}
-          />
-        </main>
+        <EmptyState
+          title="Add Page Numbers"
+          description="Add page numbers into your PDF with custom styling and positions."
+          accept="application/pdf"
+          maxFiles={1}
+          maxSizeMB={100}
+          formatName="PDF"
+          onFiles={handleFile}
+          disabled={status === "processing"}
+        />
       ) : (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-8 flex flex-col lg:flex-row items-start gap-8">
-          <section className="flex-1 w-full min-w-0">
-            <div className="flex items-center justify-between mb-6">
-              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-foreground">Page Numbers</span>
-              </nav>
-
-              <button
-                type="button"
-                onClick={handleReset}
-                className="h-9 px-4 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <RefreshCcw className="h-3.5 w-3.5" />
-                <span>Change file</span>
-              </button>
-            </div>
-
-            <div className="max-w-md w-full flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground">Interactive Live Preview</span>
-                <span className="text-xs font-semibold text-muted-foreground">{file.name}</span>
-              </div>
-
-              <div className="relative aspect-[3/4] w-full rounded-2xl border border-border bg-card overflow-hidden flex items-center justify-center p-3 select-none">
-                {previewUrl ? (
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    <img
-                      src={previewUrl}
-                      alt="PDF Preview"
-                      className="w-full h-full object-contain pointer-events-none"
-                    />
-
-                    {/* REACIVE NUMBERING OVERLAY */}
-                    <div
-                      className={`absolute pointer-events-none transition-all duration-200 px-3 py-1 font-sans text-xs font-bold text-foreground bg-background/80 border border-border/80 rounded-md backdrop-blur-xs ${
-                        position === "top-left"
-                          ? "top-4 left-4"
-                          : position === "top-center"
-                          ? "top-4 left-1/2 -translate-x-1/2"
-                          : position === "top-right"
-                          ? "top-4 right-4"
-                          : position === "bottom-left"
-                          ? "bottom-4 left-4"
-                          : position === "bottom-right"
-                          ? "bottom-4 right-4"
-                          : "bottom-4 left-1/2 -translate-x-1/2"
-                      }`}
-                    >
-                      {format === "Page 1"
-                        ? `Page ${startNumber}`
-                        : format === "1"
-                        ? `${startNumber}`
-                        : `${startNumber} / 1`}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                    <FileText className="w-8 h-8 opacity-40 animate-pulse" />
-                    <span className="text-xs font-semibold">Generating live preview…</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <aside className="w-full lg:w-[380px] shrink-0 sticky top-6 flex flex-col gap-6">
-            <div className="rounded-3xl border border-border bg-card p-6 flex flex-col gap-6">
+        <ToolLayout
+          onReset={handleReset}
+          options={
+            <>
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-foreground">
                   <Hash className="w-4 h-4" />
@@ -360,9 +287,11 @@ export default function AddPageNumbersPage() {
                   onReset={handleReset}
                 />
               )}
-
-              {status !== "completed" && (
-                <button
+            </>
+          }
+          actionButton={
+            status !== "completed" ? (
+              <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={status === "processing"}
@@ -371,10 +300,58 @@ export default function AddPageNumbersPage() {
                   <span>{status === "processing" ? "Adding…" : "Add Page Numbers"}</span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
-              )}
+            ) : null
+          }
+        >
+          
+
+            <div className="max-w-md w-full flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">Interactive Live Preview</span>
+                <span className="text-xs font-semibold text-muted-foreground">{file.name}</span>
+              </div>
+
+              <div className="relative aspect-[3/4] w-full rounded-2xl border border-border bg-card overflow-hidden flex items-center justify-center p-3 select-none">
+                {previewUrl ? (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <img
+                      src={previewUrl}
+                      alt="PDF Preview"
+                      className="w-full h-full object-contain pointer-events-none"
+                    />
+
+                    {/* REACIVE NUMBERING OVERLAY */}
+                    <div
+                      className={`absolute pointer-events-none transition-all duration-200 px-3 py-1 font-sans text-xs font-bold text-foreground bg-background/80 border border-border/80 rounded-md backdrop-blur-xs ${
+                        position === "top-left"
+                          ? "top-4 left-4"
+                          : position === "top-center"
+                          ? "top-4 left-1/2 -translate-x-1/2"
+                          : position === "top-right"
+                          ? "top-4 right-4"
+                          : position === "bottom-left"
+                          ? "bottom-4 left-4"
+                          : position === "bottom-right"
+                          ? "bottom-4 right-4"
+                          : "bottom-4 left-1/2 -translate-x-1/2"
+                      }`}
+                    >
+                      {format === "Page 1"
+                        ? `Page ${startNumber}`
+                        : format === "1"
+                        ? `${startNumber}`
+                        : `${startNumber} / 1`}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                    <FileText className="w-8 h-8 opacity-40 animate-pulse" />
+                    <span className="text-xs font-semibold">Generating live preview…</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </aside>
-        </main>
+        </ToolLayout>
       )}
     </div>
   );

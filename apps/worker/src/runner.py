@@ -1,5 +1,6 @@
 import sys
 import json
+import re
 import sqlite3
 import shutil
 import tempfile
@@ -87,7 +88,6 @@ def main():
 
         raw_out_name = options.get("outputFilename", "result.pdf")
         # Sanitize filename while respecting original extension if provided
-        import re
         base_name = Path(raw_out_name).name
         cleaned = re.sub(r"[^a-zA-Z0-9._-]", "", base_name) or "result.pdf"
         out_name = cleaned
@@ -116,7 +116,7 @@ def main():
             rotate_pdf_recipe(local_input_paths[0], tmp_output, options)
         elif tool == "organize-pdf":
             tmp_output = tmpdir / out_name
-            organize_pdf_recipe(local_input_paths[0], tmp_output, options)
+            organize_pdf_recipe(local_input_paths, tmp_output, options)
         elif tool == "compress-pdf":
             tmp_output = tmpdir / out_name
             compress_pdf_recipe(local_input_paths[0], tmp_output, options)

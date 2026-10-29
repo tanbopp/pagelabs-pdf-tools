@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
 import {
+  EmptyState,
   FileDropZone,
   SortablePdfItem,
   PdfPagePreview,
@@ -201,9 +202,9 @@ export default function MergePdfPage() {
         });
 
         if (!signRes.ok) {
-        const errMsg = await parseApiError(signRes, "Failed to sign upload");
-        throw new Error(errMsg);
-      }
+          const errMsg = await parseApiError(signRes, "Failed to sign upload");
+          throw new Error(errMsg);
+        }
 
         const { uploadUrl, fileUrl } = await signRes.json();
 
@@ -257,173 +258,140 @@ export default function MergePdfPage() {
       <Header />
 
       {fileItems.length === 0 ? (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-12 flex flex-col">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-8">
-            <Link href="/" className="hover:text-foreground transition-colors">
-              Tools
-            </Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">Merge PDF</span>
-          </nav>
-
-          <div className="mb-12">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">
-              Merge PDF
-            </h1>
-            <p className="text-base font-medium text-muted-foreground">
-              Combine PDFs into one.
-            </p>
-          </div>
-
-          <FileDropZone
-            accept="application/pdf"
-            maxFiles={20}
-            maxSizeMB={100}
-            onFiles={handleFilesAdded}
-            disabled={status === "processing"}
-          />
-        </main>
+        <EmptyState
+          title="Merge PDF files"
+          description="Combine multiple PDF files into a single document in your chosen order."
+          accept="application/pdf"
+          maxFiles={20}
+          maxSizeMB={100}
+          formatName="PDF"
+          onFiles={handleFilesAdded}
+          disabled={status === "processing"}
+        />
       ) : (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-8 flex flex-col lg:flex-row gap-10 items-start">
-          {/* Left Canvas: Clean, borderless grid container */}
-          <section className="flex-1 w-full flex flex-col gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                <Link href="/" className="hover:text-foreground transition-colors">
-                  Tools
-                </Link>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-foreground">Merge PDF</span>
-              </nav>
-
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-muted-foreground">
-                  {fileItems.length} of 20 files
-                </span>
-                {fileItems.length > 1 && (
+        <main className="flex-1 w-full flex flex-col lg:flex-row min-h-[calc(100vh-65px)]">
+          {/* Left Canvas: iLovePDF Style with Light Gray / Neutral Canvas */}
+          <section className="flex-1 bg-muted/30 p-6 lg:p-10 flex flex-col justify-between overflow-y-auto min-h-[500px]">
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center justify-end">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {fileItems.length} of 20 files
+                  </span>
+                  {fileItems.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleSortByName}
+                      title="Sort files by name A to Z"
+                      className="h-9 px-3.5 rounded-full border border-border bg-background hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <ArrowDownAZ className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Sort A-Z</span>
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={handleSortByName}
-                    title="Sort files by name A to Z"
-                    className="h-9 px-3.5 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    onClick={() => addMoreInputRef.current?.click()}
+                    className="h-9 px-4 rounded-full border border-border bg-background hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <ArrowDownAZ className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Sort A-Z</span>
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Add files</span>
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => addMoreInputRef.current?.click()}
-                  className="h-9 px-4 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Add files</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Direct Sortable Grid with DragOverlay for perfectly smooth landing without jumping */}
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={fileItems.map((item) => item.id)}
-                strategy={rectSortingStrategy}
-              >
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {fileItems.map((item, index) => (
-                    <SortablePdfItem
-                      key={item.id}
-                      id={item.id}
-                      file={item.file}
-                      index={index}
-                      onRemove={() => handleRemoveFile(item.id)}
-                      disabled={status === "processing"}
-                    />
-                  ))}
-
-                  {/* Add more files dashed card */}
-                  {fileItems.length < 20 && status !== "processing" && (
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => addMoreInputRef.current?.click()}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          addMoreInputRef.current?.click();
-                        }
-                      }}
-                      className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border hover:border-foreground/40 bg-card/40 p-6 aspect-[3/4] cursor-pointer transition-colors text-muted-foreground hover:text-foreground select-none"
-                    >
-                      <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center mb-2.5">
-                        <Plus className="h-5 w-5" />
-                      </div>
-                      <span className="text-xs font-semibold">Add more files</span>
-                    </div>
-                  )}
                 </div>
-              </SortableContext>
+              </div>
 
-              {/* DragOverlay renders the floating card while dragged, preventing any DOM drop snap */}
-              <DragOverlay dropAnimation={{
-                duration: 250,
-                easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
-              }}>
-                {activeItem ? (
-                  <div className="cursor-grabbing">
-                    <PdfPagePreview
-                      file={activeItem.file}
-                      index={fileItems.findIndex((f) => f.id === activeItem.id)}
-                      onRemove={() => {}}
-                    />
+              {/* Direct Sortable Grid with DragOverlay */}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={fileItems.map((item) => item.id)}
+                  strategy={rectSortingStrategy}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                    {fileItems.map((item, index) => (
+                      <SortablePdfItem
+                        key={item.id}
+                        id={item.id}
+                        file={item.file}
+                        index={index}
+                        onRemove={() => handleRemoveFile(item.id)}
+                        disabled={status === "processing"}
+                      />
+                    ))}
+
+                    {/* Add more files dashed card */}
+                    {fileItems.length < 20 && status !== "processing" && (
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => addMoreInputRef.current?.click()}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            addMoreInputRef.current?.click();
+                          }
+                        }}
+                        className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border hover:border-foreground/40 bg-background/60 p-6 aspect-[3/4] cursor-pointer transition-colors text-muted-foreground hover:text-foreground select-none"
+                      >
+                        <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center mb-2.5">
+                          <Plus className="h-5 w-5" />
+                        </div>
+                        <span className="text-xs font-semibold">Add more files</span>
+                      </div>
+                    )}
                   </div>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
+                </SortableContext>
 
-            <input
-              ref={addMoreInputRef}
-              type="file"
-              multiple
-              accept="application/pdf"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files) {
-                  handleFilesAdded(Array.from(e.target.files));
-                }
-                if (addMoreInputRef.current) {
-                  addMoreInputRef.current.value = "";
-                }
-              }}
-            />
+                <DragOverlay dropAnimation={{
+                  duration: 250,
+                  easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
+                }}>
+                  {activeItem ? (
+                    <div className="cursor-grabbing">
+                      <PdfPagePreview
+                        file={activeItem.file}
+                        index={fileItems.findIndex((f) => f.id === activeItem.id)}
+                        onRemove={() => { }}
+                      />
+                    </div>
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
+
+              <input
+                ref={addMoreInputRef}
+                type="file"
+                multiple
+                accept="application/pdf"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    handleFilesAdded(Array.from(e.target.files));
+                  }
+                  if (addMoreInputRef.current) {
+                    addMoreInputRef.current.value = "";
+                  }
+                }}
+              />
+            </div>
           </section>
 
-          {/* Right Panel: Sticky Options & Action */}
-          <aside className="w-full lg:w-[360px] xl:w-[400px] shrink-0 sticky top-6 flex flex-col gap-6">
-            <div className="rounded-3xl border border-border bg-card p-6 flex flex-col gap-6">
+          {/* Right Panel: Sticky iLovePDF Style Options & Action */}
+          <aside className="w-full lg:w-[380px] xl:w-[420px] shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-background lg:sticky lg:top-16 lg:h-[calc(100vh-65px)] flex flex-col justify-between overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-6 lg:p-8 flex flex-col gap-5 [scrollbar-width:thin] [scrollbar-color:hsl(var(--border))_transparent]">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">
                   Merge PDF
                 </h2>
-                <p className="text-xs font-medium text-muted-foreground">
-                  Arrange your files in the order you want them merged.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-border bg-secondary/50 p-3.5 flex items-start gap-2.5 text-muted-foreground">
-                <Info className="h-4 w-4 shrink-0 text-foreground mt-0.5" />
-                <p className="text-xs font-semibold leading-relaxed">
-                  Click and drag anywhere on a card to reorder, or hover to remove.
-                </p>
               </div>
 
               {/* Options */}
-              <div className="flex flex-col gap-5 pt-2 border-t border-border/80">
-                <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-4 pt-1">
+                <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="output-basename"
                     className="text-xs font-semibold text-foreground"
@@ -438,7 +406,7 @@ export default function MergePdfPage() {
                       onChange={(e) => setOutputBaseName(e.target.value.replace(/\.pdf$/i, ""))}
                       disabled={status === "processing"}
                       placeholder="merged"
-                      className="w-full h-11 pl-4 pr-14 rounded-2xl border border-border bg-background text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full h-10 pl-3.5 pr-14 rounded-xl border border-border bg-background text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                     <span className="absolute right-3 px-2 py-0.5 rounded-lg bg-secondary text-[11px] font-bold text-muted-foreground pointer-events-none select-none">
                       .pdf
@@ -446,7 +414,7 @@ export default function MergePdfPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between py-1">
                   <label
                     htmlFor="add-bookmarks"
                     className="text-xs font-semibold text-foreground cursor-pointer"
@@ -484,24 +452,35 @@ export default function MergePdfPage() {
                   onReset={handleReset}
                 />
               )}
+            </div>
 
-              {/* Primary Merge Action Button */}
+            {/* Pinned Primary Merge Action Button */}
+            <div className="p-6 lg:p-8 border-t border-border bg-background shrink-0 flex flex-col gap-2.5">
               {status !== "completed" && (
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={fileItems.length < 2 || status === "processing"}
-                  className="w-full h-14 rounded-full bg-primary text-primary-foreground text-base font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity cursor-pointer"
-                >
-                  <span>
-                    {status === "processing"
-                      ? "Merging…"
-                      : fileItems.length < 2
-                      ? "Select at least 2 files"
-                      : `Merge ${fileItems.length} PDFs`}
-                  </span>
-                  {status !== "processing" && fileItems.length >= 2 && <ArrowRight className="h-4 w-4" />}
-                </button>
+                <>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                    <span>Order</span>
+                    <span className="font-semibold text-foreground">
+                      {fileItems.length} file{fileItems.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={fileItems.length < 2 || status === "processing"}
+                    className="w-full h-14 rounded-full bg-primary text-primary-foreground text-base font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity cursor-pointer shadow-none"
+                  >
+                    <span>
+                      {status === "processing"
+                        ? "Merging…"
+                        : fileItems.length < 2
+                          ? "Select at least 2 files"
+                          : `Merge PDF`}
+                    </span>
+                    {status !== "processing" && fileItems.length >= 2 && <ArrowRight className="h-4 w-4" />}
+                  </button>
+                </>
               )}
             </div>
           </aside>

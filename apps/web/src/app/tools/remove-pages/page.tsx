@@ -5,6 +5,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
 import {
+  ToolLayout,
+  EmptyState,
   FileDropZone,
   ProgressCard,
   ResultCard,
@@ -196,26 +198,16 @@ export default function RemovePagesPage() {
       <Header />
 
       {!file ? (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-12 flex flex-col">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-8">
-            <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">Remove Pages</span>
-          </nav>
-
-          <div className="mb-12">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Remove Pages</h1>
-            <p className="text-base font-medium text-muted-foreground">Select pages to visually delete from PDF.</p>
-          </div>
-
-          <FileDropZone
-            accept="application/pdf"
-            maxFiles={1}
-            maxSizeMB={100}
-            onFiles={handleFile}
-            disabled={status === "processing"}
-          />
-        </main>
+        <EmptyState
+          title="Remove Pages"
+          description="Remove pages from a PDF document to create a lean, tailored file."
+          accept="application/pdf"
+          maxFiles={1}
+          maxSizeMB={100}
+          formatName="PDF"
+          onFiles={handleFile}
+          disabled={status === "processing"}
+        />
       ) : loadingPages ? (
         <main className="flex-1 max-w-md w-full mx-auto px-6 py-24 flex flex-col items-center justify-center text-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-foreground" />
@@ -225,17 +217,99 @@ export default function RemovePagesPage() {
           </div>
         </main>
       ) : (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-8 flex flex-col lg:flex-row gap-10 items-start">
-          {/* Left Canvas: Visual Grid of Pages */}
-          <section className="flex-1 w-full flex flex-col gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-foreground">Remove Pages</span>
-              </nav>
+        <ToolLayout
+          onReset={handleReset}
+          options={
+            <>
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">Remove Pages</h2>
+              </div>
 
-              <div className="flex items-center gap-3">
+              <div className="rounded-2xl border border-border bg-secondary/50 p-3.5 flex items-start gap-2.5 text-muted-foreground">
+                <Info className="h-4 w-4 shrink-0 text-foreground mt-0.5" />
+                <p className="text-xs font-semibold leading-relaxed">
+                  Pages marked with &quot;Removed&quot; will be deleted. At least one page must remain.
+                </p>
+              </div>
+
+              {/* Summary of marked pages */}
+              <div className="flex flex-col gap-2 pt-2 border-t border-border/80">
+                <label className="text-xs font-semibold text-foreground">
+                  Pages to be removed
+                </label>
+                <div className="min-h-11 px-4 py-2.5 rounded-2xl border border-border bg-background text-xs font-semibold text-foreground flex items-center">
+                  {removedPages.size > 0 ? (
+                    <span className="truncate">{pagesToRemoveString}</span>
+                  ) : (
+                    <span className="text-muted-foreground italic">No pages marked yet</span>
+                  )}
+                </div>
+                {pages.length > 0 && (
+                  <p className="text-[11px] font-semibold text-muted-foreground px-1">
+                    {removedPages.size === 0
+                      ? `Select pages to remove out of ${pages.length} total pages.`
+                      : `You are about to remove ${removedPages.size} page${removedPages.size > 1 ? "s" : ""} out of ${pages.length}.`}
+                  </p>
+                )}
+              </div>
+
+              {/* Output Filename */}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="output-name" className="text-xs font-semibold text-foreground">
+                  Output filename
+                </label>
+                <div className="relative flex items-center">
+                  <input
+                    id="output-name"
+                    type="text"
+                    value={outputBaseName}
+                    onChange={(e) => setOutputBaseName(e.target.value.replace(/\.pdf$/i, ""))}
+                    className="w-full h-11 pl-4 pr-14 rounded-2xl border border-border bg-background text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                  <span className="absolute right-3 px-2 py-0.5 rounded-lg bg-secondary text-[11px] font-bold text-muted-foreground select-none pointer-events-none">
+                    .pdf
+                  </span>
+                </div>
+              </div>
+
+              {status === "failed" && errorMessage && (
+                <ErrorAlert message={errorMessage} onRetry={handleSubmit} />
+              )}
+
+              {status === "processing" && (
+                <ProgressCard progress={-1} label="Removing selected pages…" />
+              )}
+
+              {status === "completed" && resultData && (
+                <ResultCard
+                  filename={resultData.filename}
+                  sizeBytes={resultData.resultSize}
+                  downloadUrl={resultData.downloadUrl}
+                  onReset={handleReset}
+                />
+              )}
+            </>
+          }
+          actionButton={
+            status !== "completed" ? (
+              <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={status === "processing" || removedPages.size === 0}
+                  className="w-full h-14 rounded-full bg-primary text-primary-foreground text-base font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer"
+                >
+                  <span>
+                    {status === "processing"
+                      ? "Removing…"
+                      : `Remove ${removedPages.size} Page${removedPages.size > 1 ? "s" : ""}`}
+                  </span>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+            ) : null
+          }
+        >
+          <div className="flex items-center justify-end">
+                <div className="flex items-center gap-3">
                 <span className="text-xs font-semibold text-muted-foreground">
                   {removedPages.size} of {pages.length} pages selected for removal
                 </span>
@@ -334,100 +408,7 @@ export default function RemovePagesPage() {
                 );
               })}
             </div>
-          </section>
-
-          {/* Right Panel: Controls & Action */}
-          <aside className="w-full lg:w-[380px] shrink-0 sticky top-6 flex flex-col gap-6">
-            <div className="rounded-3xl border border-border bg-card p-6 flex flex-col gap-6">
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">Remove Pages</h2>
-                <p className="text-xs font-medium text-muted-foreground">
-                  Click on any page in the grid to mark or unmark it for removal.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-border bg-secondary/50 p-3.5 flex items-start gap-2.5 text-muted-foreground">
-                <Info className="h-4 w-4 shrink-0 text-foreground mt-0.5" />
-                <p className="text-xs font-semibold leading-relaxed">
-                  Pages marked with &quot;Removed&quot; will be deleted. At least one page must remain.
-                </p>
-              </div>
-
-              {/* Summary of marked pages */}
-              <div className="flex flex-col gap-2 pt-2 border-t border-border/80">
-                <label className="text-xs font-semibold text-foreground">
-                  Pages to be removed
-                </label>
-                <div className="min-h-11 px-4 py-2.5 rounded-2xl border border-border bg-background text-xs font-semibold text-foreground flex items-center">
-                  {removedPages.size > 0 ? (
-                    <span className="truncate">{pagesToRemoveString}</span>
-                  ) : (
-                    <span className="text-muted-foreground italic">No pages marked yet</span>
-                  )}
-                </div>
-                {pages.length > 0 && (
-                  <p className="text-[11px] font-semibold text-muted-foreground px-1">
-                    {removedPages.size === 0
-                      ? `Select pages to remove out of ${pages.length} total pages.`
-                      : `You are about to remove ${removedPages.size} page${removedPages.size > 1 ? "s" : ""} out of ${pages.length}.`}
-                  </p>
-                )}
-              </div>
-
-              {/* Output Filename */}
-              <div className="flex flex-col gap-2">
-                <label htmlFor="output-name" className="text-xs font-semibold text-foreground">
-                  Output filename
-                </label>
-                <div className="relative flex items-center">
-                  <input
-                    id="output-name"
-                    type="text"
-                    value={outputBaseName}
-                    onChange={(e) => setOutputBaseName(e.target.value.replace(/\.pdf$/i, ""))}
-                    className="w-full h-11 pl-4 pr-14 rounded-2xl border border-border bg-background text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                  />
-                  <span className="absolute right-3 px-2 py-0.5 rounded-lg bg-secondary text-[11px] font-bold text-muted-foreground select-none pointer-events-none">
-                    .pdf
-                  </span>
-                </div>
-              </div>
-
-              {status === "failed" && errorMessage && (
-                <ErrorAlert message={errorMessage} onRetry={handleSubmit} />
-              )}
-
-              {status === "processing" && (
-                <ProgressCard progress={-1} label="Removing selected pages…" />
-              )}
-
-              {status === "completed" && resultData && (
-                <ResultCard
-                  filename={resultData.filename}
-                  sizeBytes={resultData.resultSize}
-                  downloadUrl={resultData.downloadUrl}
-                  onReset={handleReset}
-                />
-              )}
-
-              {status !== "completed" && (
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={status === "processing" || removedPages.size === 0}
-                  className="w-full h-14 rounded-full bg-primary text-primary-foreground text-base font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer"
-                >
-                  <span>
-                    {status === "processing"
-                      ? "Removing…"
-                      : `Remove ${removedPages.size} Page${removedPages.size > 1 ? "s" : ""}`}
-                  </span>
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </aside>
-        </main>
+        </ToolLayout>
       )}
     </div>
   );

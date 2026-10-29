@@ -55,11 +55,16 @@ export function ProgressCard({ progress, label }: ProgressCardProps) {
         />
       </div>
 
-      <div className="pt-2 border-t border-border/60 flex items-start gap-2.5 text-xs text-muted-foreground font-medium">
-        <Lightbulb className="w-3.5 h-3.5 text-foreground shrink-0 mt-0.5" />
-        <span className="animate-fade-in transition-opacity duration-300">
-          {DID_YOU_KNOW_TIPS[tipIndex]}
-        </span>
+      <div className="flex flex-col gap-2 pt-1 border-t border-border/60">
+        <p className="text-[11px] font-semibold text-muted-foreground/80">
+          Processing large files may take a few minutes. Do not close this tab.
+        </p>
+        <div className="flex items-start gap-2.5 text-xs text-muted-foreground font-medium">
+          <Lightbulb className="w-3.5 h-3.5 text-foreground shrink-0 mt-0.5" />
+          <span className="animate-fade-in transition-opacity duration-300">
+            {DID_YOU_KNOW_TIPS[tipIndex]}
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -1,105 +1,49 @@
-import shutil
-import subprocess
 from pathlib import Path
-import openpyxl
-import fitz  # PyMuPDF
+from typing import Dict, Any, Union
+import logging
+import os
 
+from pdf_tables_to_excel import convert_pdf_to_excel
 
-def find_soffice_binary() -> str | None:
-    for cmd in ["soffice", "libreoffice"]:
-        if shutil.which(cmd):
-            return cmd
-    return None
-
-
-def pdf_to_excel_fallback(pdf_path: Path, output_xlsx: Path) -> None:
-    """Fallback extracting text/tables from PDF to Excel using openpyxl & PyMuPDF."""
-    doc = fitz.open(str(pdf_path))
-    wb = openpyxl.Workbook()
-    # Remove default sheet
-    wb.remove(wb.active)
-
-    for page_idx, page in enumerate(doc):
-        ws = wb.create_sheet(title=f"Page {page_idx + 1}")
-        # Try table extraction in PyMuPDF (fitz) if available
-        tables = []
-        try:
-            tabs = page.find_tables()
-            if tabs and len(tabs.tables) > 0:
-                tables = [t.extract() for t in tabs.tables]
-        except Exception:
-            tables = []
-
-        if tables:
-            current_row = 1
-            for tab in tables:
-                for row_data in tab:
-                    for col_idx, cell_value in enumerate(row_data, start=1):
-                        ws.cell(row=current_row, column=col_idx, value=str(cell_value or ""))
-                    current_row += 1
-                current_row += 1
-        else:
-            # Fallback to lines of text
-            text = page.get_text().strip()
-            lines = text.split("\n")
-            for r_idx, line in enumerate(lines, start=1):
-                clean = line.strip()
-                if not clean:
-                    continue
-                # If tab-delimited or multi-space, split
-                parts = [p for p in clean.split("   ") if p]
-                if len(parts) > 1:
-                    for c_idx, part in enumerate(parts, start=1):
-                        ws.cell(row=r_idx, column=c_idx, value=part.strip())
-                else:
-                    ws.cell(row=r_idx, column=1, value=clean)
-
-    if not wb.sheetnames:
-        ws = wb.create_sheet(title="Extracted")
-        ws.cell(row=1, column=1, value="No tabular content detected")
-
-    wb.save(str(output_xlsx))
+logger = logging.getLogger(__name__)
 
 
 def pdf_to_excel_recipe(
-    input_path: Path,
-    output_path: Path,
-    options: dict = None
+    input_path: Union[str, Path],
+    output_path: Union[str, Path],
+    options: Dict[str, Any] = None
 ) -> Path:
     """
-    Extract PDF tables / content to Excel XLSX using LibreOffice Headless.
-    Fallback: PyMuPDF table extraction and openpyxl.
+    Convert PDF tables to nicely formatted Excel XLSX using pdf-tables-to-excel (Docling-based).
+    - Preserves cell borders, header highlights, and proper columns.
+    - Zero LibreOffice or Camelot fallback.
+    - If conversion fails or no tables can be produced, raises a clear error.
     """
-    if options is None:
-        options = {}
+    input_str = os.path.abspath(str(input_path))
+    output_str = os.path.abspath(str(output_path))
+    output_p = Path(output_str)
+    output_p.parent.mkdir(parents=True, exist_ok=True)
 
-    soffice = find_soffice_binary()
-    converted_via_soffice = False
+    logger.info(f"Converting PDF tables to formatted Excel via pdf-tables-to-excel: {input_str}")
 
-    if soffice:
-        cmd = [
-            soffice,
-            "--headless",
-            "--convert-to",
-            "xlsx",
-            "--outdir",
-            str(output_path.parent),
-            str(input_path),
-        ]
-        try:
-            res = subprocess.run(cmd, capture_output=True, timeout=180)
-            expected_out = output_path.parent / f"{input_path.stem}.xlsx"
-            if res.returncode == 0 and expected_out.exists() and expected_out.stat().st_size > 0:
-                if expected_out != output_path:
-                    shutil.move(expected_out, output_path)
-                converted_via_soffice = True
-        except Exception:
-            converted_via_soffice = False
+    try:
+        convert_pdf_to_excel(
+            input_pdf=input_str,
+            output_xlsx=output_str,
+            profile="default",
+            sheet_naming="by_page",
+            include_empty=True,
+        )
 
-    if not converted_via_soffice:
-        pdf_to_excel_fallback(input_path, output_path)
+        if not output_p.exists() or output_p.stat().st_size == 0:
+            raise RuntimeError("Generated Excel file is empty.")
 
-    if not output_path.exists() or output_path.stat().st_size == 0:
-        raise ValueError("Failed to convert PDF to Excel XLSX")
+        logger.info(f"Successfully generated styled Excel file at {output_str} ({output_p.stat().st_size} bytes)")
+        return output_p
+    except Exception as e:
+        logger.error(f"pdf-tables-to-excel conversion failed: {str(e)}", exc_info=True)
+        raise RuntimeError(f"Failed to extract formatted tables from PDF: {str(e)}")
 
-    return output_path
+
+# Alias backward compatibility
+pdf_to_excel = pdf_to_excel_recipe

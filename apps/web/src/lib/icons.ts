@@ -1,53 +1,8 @@
-import {
-  Combine,
-  Split,
-  FileMinus,
-  FileSpreadsheet,
-  Layers,
-  RotateCw,
-  Minimize2,
-  Wrench,
-  FileSearch,
-  Archive,
-  FileText,
-  Table,
-  Presentation,
-  Image,
-  Globe,
-  Lock,
-  Unlock,
-  PenTool,
-  EyeOff,
-  Sparkles,
-  Languages,
-  FileCode,
-  type LucideIcon,
-} from "lucide-react";
+import { HUGE_ICON_MAP } from "@/components/icons";
 
-export const ICON_MAP: Record<string, LucideIcon> = {
-  Combine,
-  Split,
-  FileMinus,
-  FileSpreadsheet,
-  Layers,
-  RotateCw,
-  Minimize2,
-  Wrench,
-  FileSearch,
-  Archive,
-  FileText,
-  Table,
-  Presentation,
-  Image,
-  Globe,
-  Lock,
-  Unlock,
-  PenTool,
-  EyeOff,
-  Sparkles,
-  Languages,
-};
-
-export function getToolIcon(iconName: string): LucideIcon {
-  return ICON_MAP[iconName] || FileCode;
+export function getToolIconName(identifier: string): string {
+  if (HUGE_ICON_MAP[identifier]) {
+    return identifier;
+  }
+  return "FileText";
 }

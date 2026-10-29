@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { type Metadata } from "next";
 import { Header } from "@/components/layout-shell";
 import { TOOL_REGISTRY } from "@pagelabs/shared";
 import { ChevronRight, ArrowLeft } from "lucide-react";
@@ -8,6 +9,35 @@ export function generateStaticParams() {
   return Object.keys(TOOL_REGISTRY).map((slug) => ({
     slug,
   }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const tool = TOOL_REGISTRY[slug];
+  if (!tool) return { title: "PageLabs" };
+
+  const title = `${tool.name} - Free Online PDF Tool | PageLabs`;
+  const description = `${tool.description} Fast, secure, and 100% free online PDF processing.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      siteName: "PageLabs",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
 }
 
 interface PlaceholderProps {
@@ -27,23 +57,11 @@ export default async function PlaceholderPage({ params }: PlaceholderProps) {
       <Header />
 
       <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-12 flex flex-col justify-start">
-        {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-8">
-          <Link href="/" className="hover:text-foreground transition-colors">
-            Tools
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground">{tool.name}</span>
-        </nav>
-
         {/* Title & Coming Soon body */}
         <div className="mb-12">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
             {tool.name}
           </h1>
-          <p className="text-base font-medium text-muted-foreground">
-            Coming soon.
-          </p>
         </div>
 
         {/* Back to tools button */}

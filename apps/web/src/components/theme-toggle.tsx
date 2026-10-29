@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
+import { HugeSun, HugeMoon } from "@/components/icons";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -22,12 +22,12 @@ export function ThemeToggle() {
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       aria-label="Toggle theme"
-      className="h-9 w-9 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-secondary transition-colors"
+      className="h-9 w-9 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-secondary transition-colors cursor-pointer"
     >
       {theme === "dark" ? (
-        <Sun className="h-4 w-4" />
+        <HugeSun size={17} />
       ) : (
-        <Moon className="h-4 w-4" />
+        <HugeMoon size={17} />
       )}
     </button>
   );

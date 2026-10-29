@@ -5,6 +5,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
 import {
+  ToolLayout,
+  EmptyState,
   FileDropZone,
   PdfPagePreview,
   ProgressCard,
@@ -150,57 +152,21 @@ export default function PdfFormsPage() {
       <Header />
 
       {!file ? (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-12 flex flex-col">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-8">
-            <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">PDF Forms</span>
-          </nav>
-
-          <div className="mb-12">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">PDF Forms</h1>
-            <p className="text-base font-medium text-muted-foreground">Fill, preserve, or permanently flatten interactive PDF forms.</p>
-          </div>
-
-          <FileDropZone
-            accept="application/pdf"
-            maxFiles={1}
-            maxSizeMB={100}
-            onFiles={handleFile}
-            disabled={status === "processing"}
-          />
-        </main>
+        <EmptyState
+          title="PDF Forms"
+          description="Fill out interactive PDF forms and save them easily."
+          accept="application/pdf"
+          maxFiles={1}
+          maxSizeMB={100}
+          formatName="PDF"
+          onFiles={handleFile}
+          disabled={status === "processing"}
+        />
       ) : (
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-8 flex flex-col lg:flex-row items-start gap-8">
-          <section className="flex-1 w-full min-w-0">
-            <div className="flex items-center justify-between mb-6">
-              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                <Link href="/" className="hover:text-foreground transition-colors">Tools</Link>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-foreground">PDF Forms</span>
-              </nav>
-
-              <button
-                type="button"
-                onClick={handleReset}
-                className="h-9 px-4 rounded-full border border-border bg-card hover:bg-secondary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <RefreshCcw className="h-3.5 w-3.5" />
-                <span>Change file</span>
-              </button>
-            </div>
-
-            <div className="max-w-sm">
-              <PdfPagePreview
-                file={file}
-                index={0}
-                onRemove={handleReset}
-              />
-            </div>
-          </section>
-
-          <aside className="w-full lg:w-[380px] shrink-0 sticky top-6 flex flex-col gap-6">
-            <div className="rounded-3xl border border-border bg-card p-6 flex flex-col gap-6">
+        <ToolLayout
+          onReset={handleReset}
+          options={
+            <>
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-foreground">
                   <CheckSquare className="w-4 h-4" />
@@ -267,9 +233,11 @@ export default function PdfFormsPage() {
                   onReset={handleReset}
                 />
               )}
-
-              {status !== "completed" && (
-                <button
+            </>
+          }
+          actionButton={
+            status !== "completed" ? (
+              <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={status === "processing"}
@@ -278,10 +246,19 @@ export default function PdfFormsPage() {
                   <span>{status === "processing" ? "Processing…" : "Process Forms"}</span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
-              )}
+            ) : null
+          }
+        >
+          
+
+            <div className="w-full max-w-sm flex items-center justify-center">
+              <PdfPagePreview
+                file={file}
+                index={0}
+                onRemove={handleReset}
+              />
             </div>
-          </aside>
-        </main>
+        </ToolLayout>
       )}
     </div>
   );

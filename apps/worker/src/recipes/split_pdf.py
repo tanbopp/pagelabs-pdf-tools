@@ -111,6 +111,47 @@ def split_pdf_recipe(
             generated_pdfs.append((chunk_file.name, chunk_file))
             part += 1
 
+    elif mode == "size":
+        max_size_kb = int(options.get("maxSizeKB", 500))
+        max_size_bytes = max_size_kb * 1024
+        
+        part = 1
+        chunk = pikepdf.new()
+        chunk_start_page = 1
+        current_pages = 0
+
+        for p_idx in range(total_pages):
+            chunk.pages.append(src.pages[p_idx])
+            current_pages += 1
+            
+            # Save temporarily to inspect size
+            test_file = tmp_dir / f"test_chunk.pdf"
+            chunk.save(str(test_file))
+            
+            # If exceeding max size and chunk has more than 1 page, split previous pages
+            if test_file.stat().st_size > max_size_bytes and current_pages > 1:
+                # Rebuild chunk without the last page
+                prev_chunk = pikepdf.new()
+                for prev_idx in range(chunk_start_page - 1, p_idx):
+                    prev_chunk.pages.append(src.pages[prev_idx])
+                
+                final_file = tmp_dir / f"part_{part}_pages_{chunk_start_page}-{p_idx}.pdf"
+                prev_chunk.save(str(final_file))
+                generated_pdfs.append((final_file.name, final_file))
+                part += 1
+                
+                # Start new chunk with current page
+                chunk = pikepdf.new()
+                chunk.pages.append(src.pages[p_idx])
+                chunk_start_page = p_idx + 1
+                current_pages = 1
+
+        # Save remaining chunk
+        if current_pages > 0:
+            final_file = tmp_dir / f"part_{part}_pages_{chunk_start_page}-{total_pages}.pdf"
+            chunk.save(str(final_file))
+            generated_pdfs.append((final_file.name, final_file))
+
     elif mode == "all":
         for p_idx in range(total_pages):
             chunk = pikepdf.new()

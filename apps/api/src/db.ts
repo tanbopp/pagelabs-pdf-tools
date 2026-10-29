@@ -1,9 +1,14 @@
 import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import { type JobRecord, type JobStatus } from "@pagelabs/shared";
 
-const dbDir = path.resolve(process.cwd(), "data");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure dbDir always resolves to apps/api/data
+const dbDir = path.resolve(__dirname, "../data");
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }

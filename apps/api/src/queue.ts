@@ -1,9 +1,13 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
 import { jobDb } from "./db.js";
 import { log } from "./logger.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Queue for job processing
 interface QueuedJob {
@@ -50,14 +54,40 @@ async function processNextJob() {
   const isOcr = job.tool === "ocr-pdf";
   const timeoutMs = isOcr ? 600 * 1000 : config.limits.jobTimeoutSeconds * 1000;
 
-  const workerScript = path.resolve(
-    process.cwd(),
-    "../worker/src/runner.py"
-  );
+  // Robust worker script path resolving regardless of process.cwd()
+  const workerDir = path.resolve(__dirname, "../../worker");
+  const workerScript = path.resolve(workerDir, "src/runner.py");
 
-  const runnerProcess = spawn("python", [workerScript, jobId], {
+  // Determine python executable path (check process.env.PYTHON_PATH, C:\Python313\python.exe, or fallback to python)
+  let pythonBin = process.env.PYTHON_PATH || "python";
+  if (process.platform === "win32") {
+    if (fs.existsSync("C:\\Python313\\python.exe")) {
+      pythonBin = "C:\\Python313\\python.exe";
+    }
+  }
+
+  const runnerProcess = spawn(pythonBin, [workerScript, jobId], {
     env: { ...process.env },
-    cwd: path.resolve(process.cwd(), "../worker"),
+    cwd: workerDir,
+  });
+
+  runnerProcess.on("error", (err) => {
+    clearTimeout(timer);
+    jobDb.updateStatus(jobId, {
+      status: "failed",
+      completed_at: new Date().toISOString(),
+      error_code: "WORKER_SPAWN_ERROR",
+      error_message: `Worker spawn failed: ${err.message}`,
+    });
+    log({
+      level: "error",
+      event: "job.failed",
+      job_id: jobId,
+      error_code: "WORKER_SPAWN_ERROR",
+      error: err.message,
+    });
+    isWorkerActive = false;
+    processNextJob();
   });
 
   let stdout = "";
