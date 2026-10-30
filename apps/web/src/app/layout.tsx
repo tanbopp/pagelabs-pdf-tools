@@ -95,6 +95,11 @@ export default function RootLayout({
           "@type": "Organization",
           "name": "PageLabs",
           "url": "https://tanbopp.cloud"
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://tanbopp.cloud/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
         }
       },
       {
@@ -104,11 +109,51 @@ export default function RootLayout({
         "operatingSystem": "All",
         "applicationCategory": "UtilitiesApplication",
         "url": "https://tanbopp.cloud",
+        "description": "Complete suite of 30+ free online PDF utilities: merge, split, compress, edit, convert, and sign PDF documents privately.",
+        "featureList": [
+          "Merge PDF",
+          "Split PDF",
+          "Compress PDF",
+          "Edit & Annotate PDF",
+          "Add Page Numbers",
+          "Sign PDF",
+          "Convert PDF to Office and Images"
+        ],
         "offers": {
           "@type": "Offer",
           "price": "0",
           "priceCurrency": "USD"
         }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://tanbopp.cloud/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Is PageLabs free to use?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, PageLabs is 100% free with no registration, no advertisements, and no hidden subscriptions."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Are my files secure and private on PageLabs?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, documents are processed in sandboxed environments and client-side web engines. All files are automatically and irreversibly shredded within 2 hours."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How can I edit, merge, or annotate PDF documents online?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Simply choose a tool on PageLabs (such as Edit PDF, Merge PDF, or Add Page Numbers), drop your document, customize your changes, and download the resulting file instantly."
+            }
+          }
+        ]
       }
     ]
   };
