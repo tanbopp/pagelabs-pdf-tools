@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 import { TOOL_REGISTRY } from "@pagelabs/shared";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://tanbopp.cloud";
+  const baseUrl = "https://pagelabs.tanbopp.cloud";
   const lastModified = new Date();
 
   // Core Static Pages

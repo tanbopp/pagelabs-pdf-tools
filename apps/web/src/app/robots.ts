@@ -24,7 +24,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
       },
     ],
-    sitemap: "https://tanbopp.cloud/sitemap.xml",
-    host: "https://tanbopp.cloud",
+    sitemap: "https://pagelabs.tanbopp.cloud/sitemap.xml",
+    host: "https://pagelabs.tanbopp.cloud",
   };
 }

@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: `${title} | PageLabs`,
       description,
-      url: "https://tanbopp.cloud/tools/pdf-forms",
+      url: "https://pagelabs.tanbopp.cloud/tools/pdf-forms",
       type: "website",
       siteName: "PageLabs",
     },

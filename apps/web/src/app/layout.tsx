@@ -14,14 +14,14 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://tanbopp.cloud"),
+  metadataBase: new URL("https://pagelabs.tanbopp.cloud"),
   title: {
     default: "PageLabs — Clean, Modern PDF Tools",
     template: "%s | PageLabs",
   },
   description: "Every PDF tool in one place. Fast, private, and minimal. Merge, split, compress, convert, edit, and secure PDF files online 100% free.",
   applicationName: "PageLabs",
-  authors: [{ name: "PageLabs", url: "https://tanbopp.cloud" }],
+  authors: [{ name: "PageLabs", url: "https://pagelabs.tanbopp.cloud" }],
   generator: "Next.js",
   keywords: [
     "PDF tools",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://tanbopp.cloud",
+    url: "https://pagelabs.tanbopp.cloud",
     siteName: "PageLabs",
     title: "PageLabs — Clean, Modern PDF Tools",
     description: "Every PDF tool in one place. Fast, private, and minimal. Merge, split, compress, convert, and edit PDFs online.",
@@ -87,28 +87,28 @@ export default function RootLayout({
     "@graph": [
       {
         "@type": "WebSite",
-        "@id": "https://tanbopp.cloud/#website",
-        "url": "https://tanbopp.cloud",
+        "@id": "https://pagelabs.tanbopp.cloud/#website",
+        "url": "https://pagelabs.tanbopp.cloud",
         "name": "PageLabs",
         "description": "Every PDF tool in one place. Fast, private, and minimal.",
         "publisher": {
           "@type": "Organization",
           "name": "PageLabs",
-          "url": "https://tanbopp.cloud"
+          "url": "https://pagelabs.tanbopp.cloud"
         },
         "potentialAction": {
           "@type": "SearchAction",
-          "target": "https://tanbopp.cloud/?q={search_term_string}",
+          "target": "https://pagelabs.tanbopp.cloud/?q={search_term_string}",
           "query-input": "required name=search_term_string"
         }
       },
       {
         "@type": "SoftwareApplication",
-        "@id": "https://tanbopp.cloud/#application",
+        "@id": "https://pagelabs.tanbopp.cloud/#application",
         "name": "PageLabs PDF Tools",
         "operatingSystem": "All",
         "applicationCategory": "UtilitiesApplication",
-        "url": "https://tanbopp.cloud",
+        "url": "https://pagelabs.tanbopp.cloud",
         "description": "Complete suite of 30+ free online PDF utilities: merge, split, compress, edit, convert, and sign PDF documents privately.",
         "featureList": [
           "Merge PDF",
@@ -127,7 +127,7 @@ export default function RootLayout({
       },
       {
         "@type": "FAQPage",
-        "@id": "https://tanbopp.cloud/#faq",
+        "@id": "https://pagelabs.tanbopp.cloud/#faq",
         "mainEntity": [
           {
             "@type": "Question",

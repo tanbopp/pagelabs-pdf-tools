@@ -29,6 +29,6 @@ Allow: /
 User-agent: CCBot
 Allow: /
 
-Sitemap: https://tanbopp.cloud/sitemap.xml
-Host: https://tanbopp.cloud
+Sitemap: https://pagelabs.tanbopp.cloud/sitemap.xml
+Host: https://pagelabs.tanbopp.cloud
 
