@@ -2,27 +2,24 @@
 import { parseApiError } from "@/lib/api-client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { Header } from "@/components/layout-shell";
 import {
   ToolLayout,
   EmptyState,
-  FileDropZone,
   PdfPagePreview,
-  ProgressCard,
   ResultCard,
   ErrorAlert,
-  CustomSelect,
+  OcrLanguageSelector,
 } from "@/components/shared";
 import { toast } from "sonner";
 import * as SwitchPrimitives from "@radix-ui/react-switch";
-import { ChevronRight, ArrowRight, RefreshCcw } from "lucide-react";
+import { ArrowRight, Info, Loader2 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function OcrPdfPage() {
   const [file, setFile] = useState<File | null>(null);
-  const [language, setLanguage] = useState("English");
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["eng"]);
   const [addTextLayerOnly, setAddTextLayerOnly] = useState(true);
   const [forceOcr, setForceOcr] = useState(false);
   const [outputBaseName, setOutputBaseName] = useState("ocr");
@@ -54,7 +51,7 @@ export default function OcrPdfPage() {
     setErrorMessage(null);
     setResultData(null);
     setOutputBaseName("ocr");
-    setLanguage("English");
+    setSelectedLanguages(["eng"]);
     setAddTextLayerOnly(true);
     setForceOcr(false);
   };
@@ -135,7 +132,8 @@ export default function OcrPdfPage() {
             },
           ],
           options: {
-            language,
+            languages: selectedLanguages,
+            language: selectedLanguages[0] || "eng",
             add_text_layer_only: addTextLayerOnly,
             force_ocr: isForce,
             outputFilename: `${outputBaseName}.pdf`,
@@ -156,14 +154,6 @@ export default function OcrPdfPage() {
     }
   };
 
-  const languages = [
-    { label: "English", value: "English" },
-    { label: "Indonesian (Bahasa Indonesia)", value: "Indonesian" },
-    { label: "Spanish (Español)", value: "Spanish" },
-    { label: "French (Français)", value: "French" },
-    { label: "German (Deutsch)", value: "German" },
-  ];
-
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-sans">
       <Header />
@@ -181,23 +171,59 @@ export default function OcrPdfPage() {
         />
       ) : (
         <ToolLayout
+          status={status}
+          processingNode={
+            <div className="flex flex-col items-center justify-center gap-6 py-12 animate-in fade-in duration-300">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground text-center">
+                Recognising text...
+              </h2>
+              <div className="relative flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full border-4 border-muted border-t-primary animate-spin" />
+              </div>
+            </div>
+          }
+          completedNode={
+            resultData ? (
+              <ResultCard
+                filename={resultData.filename}
+                sizeBytes={resultData.resultSize}
+                downloadUrl={resultData.downloadUrl}
+                onReset={handleReset}
+              />
+            ) : null
+          }
           onReset={handleReset}
           options={
             <>
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-foreground">OCR Settings</h2>
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                  OCR PDF options
+                </h2>
               </div>
 
-              {/* Language Selection */}
+              {/* iLovePDF style Information Callout */}
+              <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-secondary/80 border border-border text-foreground">
+                <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  The accuracy of detection is increased by correctly selecting the document&apos;s languages.
+                </p>
+              </div>
+
+              {/* Document Languages Multi-select */}
               <div className="flex flex-col gap-2">
-                <label id="language-select-label" className="text-xs font-semibold text-foreground">
-                  Document Language
-                </label>
-                <CustomSelect
-                  id="language-select"
-                  value={language}
-                  onChange={(val) => setLanguage(val)}
-                  options={languages.map((l) => ({ value: l.value, label: l.label }))}
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-foreground">
+                    Document languages
+                  </label>
+                  <span className="text-[11px] font-medium text-muted-foreground">
+                    {selectedLanguages.length}/3
+                  </span>
+                </div>
+                <OcrLanguageSelector
+                  selectedCodes={selectedLanguages}
+                  onChange={setSelectedLanguages}
+                  maxSelections={3}
+                  disabled={status === "processing"}
                 />
               </div>
 
@@ -281,44 +307,29 @@ export default function OcrPdfPage() {
                   )}
                 </div>
               )}
-
-              {status === "processing" && (
-                <ProgressCard progress={-1} label="Extracting text layer…" />
-              )}
-
-              {status === "completed" && resultData && (
-                <ResultCard
-                  filename={resultData.filename}
-                  sizeBytes={resultData.resultSize}
-                  downloadUrl={resultData.downloadUrl}
-                  onReset={handleReset}
-                />
-              )}
             </>
           }
           actionButton={
             status !== "completed" ? (
               <button
-                  type="button"
-                  onClick={() => handleSubmit()}
-                  disabled={status === "processing"}
-                  className="w-full h-14 rounded-full bg-primary text-primary-foreground text-base font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer"
-                >
-                  <span>{status === "processing" ? "Processing OCR…" : "Start OCR"}</span>
-                  <ArrowRight className="h-4 w-4" />
-                </button>
+                type="button"
+                onClick={() => handleSubmit()}
+                disabled={status === "processing"}
+                className="w-full h-14 rounded-full bg-primary text-primary-foreground text-base font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer shadow-sm"
+              >
+                <span>{status === "processing" ? "Processing OCR…" : "Apply OCR"}</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
             ) : null
           }
         >
-          
-
-            <div className="w-full max-w-sm flex items-center justify-center">
-              <PdfPagePreview
-                file={file}
-                index={0}
-                onRemove={handleReset}
-              />
-            </div>
+          <div className="w-full max-w-sm flex items-center justify-center">
+            <PdfPagePreview
+              file={file}
+              index={0}
+              onRemove={handleReset}
+            />
+          </div>
         </ToolLayout>
       )}
     </div>

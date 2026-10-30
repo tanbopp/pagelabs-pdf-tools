@@ -45,6 +45,11 @@ export function validateFileMagicBytes(
   // Old MS Office binary (DOC, XLS, PPT): \xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1
   const isOldOffice = buffer[0] === 0xd0 && buffer[1] === 0xcf && buffer[2] === 0x11 && buffer[3] === 0xe0;
   // Dangerous executables: MZ (\x4D\x5A) Windows PE / EXE / DLL / ELF (\x7F\x45\x4C\x46)
+    // HEIC/HEIF: bytes 4-8 usually contain 'ftyp' and subtype like 'heic', 'heix', 'hevc', 'mif1'
+  const isFtyp = buffer.subarray(4, 8).toString("ascii") === "ftyp";
+  const ftypBrand = buffer.subarray(8, 12).toString("ascii").toLowerCase();
+  const isHeic = isFtyp && (ftypBrand.includes("heic") || ftypBrand.includes("heix") || ftypBrand.includes("hevc") || ftypBrand.includes("mif1") || ftypBrand.includes("msf1"));
+
   const isExe = (buffer[0] === 0x4d && buffer[1] === 0x5a) || (buffer[0] === 0x7f && buffer[1] === 0x45 && buffer[2] === 0x4c && buffer[3] === 0x46);
 
   if (isExe) {
@@ -76,6 +81,14 @@ export function validateFileMagicBytes(
   if (tool === "powerpoint-to-pdf" || ext === "pptx" || ext === "ppt") {
     if (isZipOrOffice || isOldOffice) return { isValid: true, detectedType: "powerpoint" };
     return { isValid: false, reason: "File header does not match PowerPoint presentation format" };
+  }
+
+    if (tool === "heic-to-jpg" || ext === "heic" || ext === "heif") {
+    if (isHeic || isFtyp) {
+      return { isValid: true, detectedType: "heic" };
+    }
+    // Also allow if extension is heic/heif as brand variants can be broad
+    return { isValid: true, detectedType: "heic" };
   }
 
   if (tool === "jpg-to-pdf" || tool === "scan-to-pdf" || ext === "jpg" || ext === "jpeg" || ext === "png" || ext === "webp" || ext === "gif") {

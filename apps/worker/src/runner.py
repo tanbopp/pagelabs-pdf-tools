@@ -36,6 +36,7 @@ from recipes.crop_pdf import crop_pdf_recipe
 from recipes.pdf_forms import pdf_forms_recipe
 from recipes.edit_pdf import edit_pdf_recipe
 from recipes.compare_pdf import compare_pdf_recipe
+from recipes.heic_to_jpg import heic_to_jpg_recipe
 
 
 def main():
@@ -190,6 +191,9 @@ def main():
         elif tool == "compare-pdf":
             tmp_output = tmpdir / out_name
             compare_pdf_recipe(local_input_paths, tmp_output, options)
+        elif tool == "heic-to-jpg":
+            tmp_output = tmpdir / out_name
+            tmp_output = heic_to_jpg_recipe(local_input_paths, tmp_output, options)
         else:
             raise ValueError(f"Unsupported tool: {tool}")
 

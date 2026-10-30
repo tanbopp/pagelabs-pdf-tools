@@ -191,6 +191,14 @@ export default function PdfToPowerpointPage() {
         />
       ) : (
         <ToolLayout
+          status={status}
+          processingNode={<ProgressCard progress={-1} label="Converting PDF to PowerPoint…" />}
+          completedNode={resultData ? (<ResultCard
+                  filename={resultData.filename}
+                  sizeBytes={resultData.resultSize}
+                  downloadUrl={resultData.downloadUrl}
+                  onReset={handleReset}
+                />) : null}
           onReset={handleReset}
           options={
             <>

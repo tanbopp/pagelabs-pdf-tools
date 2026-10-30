@@ -13,6 +13,17 @@ export interface ToolLayoutProps {
   canvasClassName?: string;
   panelClassName?: string;
   className?: string;
+  /**
+   * Tool operational status:
+   * - "idle" | "failed": standard split canvas + right panel layout
+   * - "processing": hides right panel and canvas, renders centered loading in full viewport
+   * - "completed": hides right panel and canvas, renders centered result card in full viewport
+   */
+  status?: "idle" | "processing" | "completed" | "failed";
+  /** Optional custom loading node for processing state */
+  processingNode?: React.ReactNode;
+  /** Optional custom result node for completed state */
+  completedNode?: React.ReactNode;
 }
 
 export function ToolLayout({
@@ -24,7 +35,43 @@ export function ToolLayout({
   canvasClassName,
   panelClassName,
   className,
+  status = "idle",
+  processingNode,
+  completedNode,
 }: ToolLayoutProps) {
+  // 1. Full-screen Centered State when processing
+  if (status === "processing") {
+    return (
+      <main
+        className={cn(
+          "w-full h-[calc(100vh-65px)] flex flex-col items-center justify-center bg-background text-foreground overflow-y-auto px-6",
+          className
+        )}
+      >
+        <div className="flex flex-col items-center justify-center min-h-[70vh] w-full max-w-2xl mx-auto px-6 text-center animate-in fade-in duration-200">
+          {processingNode}
+        </div>
+      </main>
+    );
+  }
+
+  // 2. Full-screen Centered State when completed (Download)
+  if (status === "completed") {
+    return (
+      <main
+        className={cn(
+          "w-full h-[calc(100vh-65px)] flex flex-col items-center justify-center bg-background text-foreground overflow-y-auto px-6",
+          className
+        )}
+      >
+        <div className="flex flex-col items-center justify-center min-h-[70vh] w-full max-w-2xl mx-auto px-6 text-center animate-in fade-in duration-200">
+          {completedNode}
+        </div>
+      </main>
+    );
+  }
+
+  // 3. Normal Workspace State (idle / failed with ErrorAlert)
   return (
     <main
       className={cn(
@@ -81,4 +128,3 @@ export function ToolLayout({
     </main>
   );
 }
-

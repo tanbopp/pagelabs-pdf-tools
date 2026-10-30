@@ -164,6 +164,14 @@ export default function PdfFormsPage() {
         />
       ) : (
         <ToolLayout
+          status={status}
+          processingNode={<ProgressCard progress={-1} label="Processing form fields…" />}
+          completedNode={resultData ? (<ResultCard
+                  filename={resultData.filename}
+                  sizeBytes={resultData.resultSize}
+                  downloadUrl={resultData.downloadUrl}
+                  onReset={handleReset}
+                />) : null}
           onReset={handleReset}
           options={
             <>

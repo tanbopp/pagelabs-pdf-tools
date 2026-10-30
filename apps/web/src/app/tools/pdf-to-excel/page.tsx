@@ -160,6 +160,14 @@ export default function PdfToExcelPage() {
         />
       ) : (
         <ToolLayout
+          status={status}
+          processingNode={<ProgressCard progress={-1} label="Extracting PDF to Excel…" />}
+          completedNode={resultData ? (<ResultCard
+                  filename={resultData.filename}
+                  sizeBytes={resultData.resultSize}
+                  downloadUrl={resultData.downloadUrl}
+                  onReset={handleReset}
+                />) : null}
           onReset={handleReset}
           options={
             <>

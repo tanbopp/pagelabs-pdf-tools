@@ -338,6 +338,14 @@ export default function AddWatermarkPage() {
         />
       ) : (
         <ToolLayout
+          status={status}
+          processingNode={<ProgressCard progress={-1} label="Stamping watermark…" />}
+          completedNode={resultData ? (<ResultCard
+                  filename={resultData.filename}
+                  sizeBytes={resultData.resultSize}
+                  downloadUrl={resultData.downloadUrl}
+                  onReset={handleReset}
+                />) : null}
           onReset={handleReset}
           options={
             <>

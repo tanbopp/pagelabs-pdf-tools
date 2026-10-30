@@ -106,7 +106,8 @@ export type RepairPdfOptions = z.infer<typeof repairPdfOptionsSchema>;
 
 // 9. OCR PDF Options Schema (PRD 3 §3.3)
 export const ocrPdfOptionsSchema = z.object({
-  language: z.enum(["eng", "ind", "spa", "fra", "deu", "English", "Indonesian", "Spanish", "French", "German"]).default("eng"),
+  language: z.string().optional().default("eng"),
+  languages: z.array(z.string()).optional().default(["eng"]),
   add_text_layer_only: z.boolean().default(true),
   force_ocr: z.boolean().optional().default(false),
   textLayerOnly: z.boolean().optional(),
@@ -321,6 +322,13 @@ export const editPdfOptionsSchema = z.object({
   annotations: z.array(z.record(z.unknown())).optional(),
 });
 export type EditPdfOptions = z.infer<typeof editPdfOptionsSchema>;
+
+// 29. HEIC to JPG Options Schema
+export const heicToJpgOptionsSchema = z.object({
+  quality: z.enum(["high", "medium", "low"]).default("high"),
+  outputFilename: z.string().optional().default("converted_photos.zip"),
+});
+export type HeicToJpgOptions = z.infer<typeof heicToJpgOptionsSchema>;
 
 export const TOOL_REGISTRY: Record<string, ToolDefinition> = {
   // Organize & Manage (Tahap 1 & Tahap 2)
@@ -590,6 +598,20 @@ export const TOOL_REGISTRY: Record<string, ToolDefinition> = {
     available: true,
     optionsSchema: pdfToPdfaOptionsSchema,
   },
+  "heic-to-jpg": {
+    slug: "heic-to-jpg",
+    name: "HEIC to JPG",
+    description: "Convert Apple HEIC photos to JPG.",
+    category: "convert-from",
+    icon: "Image",
+    accept: ".heic,.heif,image/heic,image/heif",
+    minFiles: 1,
+    maxFiles: 20,
+    maxSizeMB: 100,
+    available: true,
+    optionsSchema: heicToJpgOptionsSchema,
+  },
+
 
   // Edit PDF (Tahap 7)
   "add-page-numbers": {

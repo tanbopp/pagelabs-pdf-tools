@@ -169,6 +169,14 @@ export default function RedactPdfPage() {
         />
       ) : (
         <ToolLayout
+          status={status}
+          processingNode={<ProgressCard progress={-1} label="Redacting text…" />}
+          completedNode={resultData ? (<ResultCard
+                  filename={resultData.filename}
+                  sizeBytes={resultData.resultSize}
+                  downloadUrl={resultData.downloadUrl}
+                  onReset={handleReset}
+                />) : null}
           onReset={handleReset}
           options={
             <>

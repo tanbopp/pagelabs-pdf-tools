@@ -12,3 +12,4 @@ export * from "./SortablePdfItem";
 export * from "./OrganizePageCard";
 export * from "./SplitPageCard";
 export * from "./CustomSelect";
+export * from "./OcrLanguageSelector";

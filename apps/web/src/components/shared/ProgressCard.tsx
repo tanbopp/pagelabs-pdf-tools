@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Loader2, Lightbulb } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface ProgressCardProps {
-  progress: number; // 0-100, or -1 for indeterminate
-  label: string;
+  progress?: number; // 0-100, or -1 / omitted for indeterminate
+  label?: string;
+  className?: string;
+  showTips?: boolean;
 }
 
 const DID_YOU_KNOW_TIPS = [
@@ -16,56 +18,64 @@ const DID_YOU_KNOW_TIPS = [
   "Tip: You can keyboard navigate PageLabs with Tab and Space/Enter for full accessibility.",
 ];
 
-export function ProgressCard({ progress, label }: ProgressCardProps) {
-  const isIndeterminate = progress < 0;
+export function ProgressCard({
+  progress = -1,
+  label = "Processing your file...",
+  className,
+  showTips = true,
+}: ProgressCardProps) {
+  const isIndeterminate = progress === undefined || progress < 0;
   const clampedProgress = Math.min(100, Math.max(0, progress));
   const [tipIndex, setTipIndex] = useState(0);
 
   useEffect(() => {
+    if (!showTips) return;
     const interval = setInterval(() => {
       setTipIndex((prev) => (prev + 1) % DID_YOU_KNOW_TIPS.length);
-    }, 4000);
+    }, 4500);
     return () => clearInterval(interval);
-  }, []);
+  }, [showTips]);
 
   return (
     <div
-      role="progressbar"
-      aria-valuenow={isIndeterminate ? undefined : clampedProgress}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      className="rounded-3xl border border-border bg-card p-8 flex flex-col gap-5 text-foreground"
+      role="status"
+      aria-live="polite"
+      className={cn(
+        "flex flex-col items-center justify-center min-h-[60vh] w-full max-w-xl mx-auto px-6 text-center gap-7 animate-in fade-in duration-200 select-none",
+        className
+      )}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          <span className="text-base font-semibold">{label}</span>
-        </div>
+      {/* Primary Status Text */}
+      <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        {label}
+      </h2>
+
+      {/* Large Spinner (iLovePDF Style) */}
+      <div className="relative flex items-center justify-center my-2">
+        <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-4 border-muted/50 border-t-primary animate-spin" />
         {!isIndeterminate && (
-          <span className="text-sm font-semibold">{clampedProgress}%</span>
+          <span className="absolute text-sm sm:text-base font-bold text-foreground">
+            {clampedProgress}%
+          </span>
         )}
       </div>
 
-      <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-        <div
-          className="h-full rounded-full bg-foreground transition-all duration-300 ease-out"
-          style={{
-            width: isIndeterminate ? "40%" : `${clampedProgress}%`,
-          }}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2 pt-1 border-t border-border/60">
-        <p className="text-[11px] font-semibold text-muted-foreground/80">
-          Processing large files may take a few minutes. Do not close this tab.
-        </p>
-        <div className="flex items-start gap-2.5 text-xs text-muted-foreground font-medium">
-          <Lightbulb className="w-3.5 h-3.5 text-foreground shrink-0 mt-0.5" />
-          <span className="animate-fade-in transition-opacity duration-300">
-            {DID_YOU_KNOW_TIPS[tipIndex]}
-          </span>
+      {/* Determinate progress bar if percentage provided */}
+      {!isIndeterminate && (
+        <div className="w-full max-w-xs h-2 rounded-full bg-secondary overflow-hidden">
+          <div
+            className="h-full bg-primary transition-all duration-300 rounded-full"
+            style={{ width: `${clampedProgress}%` }}
+          />
         </div>
-      </div>
+      )}
+
+      {/* Rotating Helpful Tip Box */}
+      {showTips && (
+        <p className="text-xs sm:text-sm font-medium text-muted-foreground/80 max-w-md transition-opacity duration-300">
+          {DID_YOU_KNOW_TIPS[tipIndex]}
+        </p>
+      )}
     </div>
   );
 }

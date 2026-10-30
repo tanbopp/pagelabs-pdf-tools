@@ -21,12 +21,9 @@ def check_pdf_has_searchable_text(input_path: Path) -> bool:
             with pikepdf.open(input_path) as pdf:
                 for page in pdf.pages:
                     if "/Contents" in page:
-                        # Extract stream or text if possible
                         try:
                             stream = page.Contents.read_bytes()
-                            # Check for Tj or TJ operators with actual ASCII text
                             if b"Tj" in stream or b"TJ" in stream:
-                                # Could indicate text
                                 pass
                         except Exception:
                             pass
@@ -47,7 +44,8 @@ def ocr_pdf_recipe(
     """
     Make scanned PDFs searchable with ocrmypdf.
     Options:
-      - lang: language code (default "eng", e.g. "ind", "spa")
+      - languages: list of language codes e.g. ["eng", "ind"]
+      - language: fallback single language string (default "eng")
       - add_text_layer_only: bool (default True)
       - force_ocr: bool (default False) - force OCR even if text already exists
     """
@@ -63,11 +61,45 @@ def ocr_pdf_recipe(
         "Spanish": "spa",
         "French": "fra",
         "German": "deu",
+        "Italian": "ita",
+        "Portuguese": "por",
+        "Dutch; Flemish": "nld",
+        "Chinese - Simplified": "chi_sim",
+        "Chinese - Traditional": "chi_tra",
+        "Japanese": "jpn",
+        "Korean": "kor",
+        "Russian": "rus",
+        "Arabic": "ara",
+        "Hindi": "hin",
         "eng": "eng",
         "ind": "ind",
+        "spa": "spa",
+        "fra": "fra",
+        "deu": "deu",
     }
-    lang_opt = options.get("language") or options.get("lang") or "eng"
-    lang = lang_map.get(lang_opt, lang_opt)
+
+    # Resolve languages list:
+    # Supports array format {"languages": ["eng", "ind"]} or string {"language": "eng"}
+    raw_langs = options.get("languages")
+    if not raw_langs:
+        single_lang = options.get("language") or options.get("lang") or "eng"
+        raw_langs = [single_lang]
+    elif isinstance(raw_langs, str):
+        raw_langs = [raw_langs]
+
+    # Map names or codes to Tesseract 3-letter codes
+    mapped_langs = []
+    for l in raw_langs:
+        code = lang_map.get(l, l.lower())
+        if code and code not in mapped_langs:
+            mapped_langs.append(code)
+
+    if not mapped_langs:
+        mapped_langs = ["eng"]
+
+    # Combine languages with plus sign, e.g. "eng+ind"
+    lang_str = "+".join(mapped_langs[:3])
+
     add_text_layer_only = options.get("add_text_layer_only", True)
 
     ocrmypdf_bin = find_ocrmypdf_binary()
@@ -77,7 +109,7 @@ def ocr_pdf_recipe(
             ocrmypdf_bin,
             "--force-ocr" if force_ocr else "--skip-text",
             "-l",
-            lang,
+            lang_str,
         ]
         if not add_text_layer_only:
             # Re-rasterize or optimize image layers if not preserving original exactly
