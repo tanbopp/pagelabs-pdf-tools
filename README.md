@@ -311,6 +311,9 @@ or [`help wanted`](https://github.com/tanbopp/pagelabs-pdf-tools/labels/help%20w
 Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before participating. For security
 issues, follow [SECURITY.md](SECURITY.md) — never open a public issue.
 
+Maintainers: repository settings, labels, starter issues and release commands live in
+[docs/GITHUB_SETUP.md](docs/GITHUB_SETUP.md).
+
 ---
 
 ## License

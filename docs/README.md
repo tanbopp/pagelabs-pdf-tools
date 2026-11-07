@@ -71,3 +71,5 @@ PY
 
 `social-preview.png` is 1280×640 with an off-white background, near-black Manrope headline and a
 single red accent. Upload it manually at **Settings → Social preview** in the GitHub repository.
+See [GITHUB_SETUP.md](GITHUB_SETUP.md) for the description, topics, labels, starter issues and
+release commands.
