@@ -1,6 +1,38 @@
 {
   "name": "pagelabs",
+  "version": "0.1.0",
   "private": true,
+  "description": "Clean, privacy-first suite of 30+ PDF tools: merge, compress, convert, OCR and more. Files shredded after processing.",
+  "license": "MIT",
+  "author": "tanbopp",
+  "homepage": "https://pagelabs.tanbopp.cloud",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tanbopp/pagelabs-pdf-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tanbopp/pagelabs-pdf-tools/issues"
+  },
+  "keywords": [
+    "pdf-tools",
+    "pdf-processing",
+    "pdf-converter",
+    "pdf-compressor",
+    "ocr",
+    "privacy-first",
+    "open-source",
+    "nextjs",
+    "hono",
+    "typescript",
+    "python",
+    "tailwindcss",
+    "monorepo",
+    "pnpm",
+    "docker",
+    "bullmq",
+    "ghostscript",
+    "pikepdf"
+  ],
   "packageManager": "pnpm@11.21.0",
   "scripts": {
     "dev": "pnpm --parallel --filter \"./apps/*\" dev",
