@@ -55,11 +55,20 @@ export const metadata: Metadata = {
     siteName: "PageLabs",
     title: "PageLabs — Clean, Modern PDF Tools",
     description: "Every PDF tool in one place. Fast, private, and minimal. Merge, split, compress, convert, and edit PDFs online.",
+    images: [
+      {
+        url: "/social-preview.png",
+        width: 1280,
+        height: 640,
+        alt: "PageLabs — Every PDF tool. One place.",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "PageLabs — Clean, Modern PDF Tools",
     description: "Every PDF tool in one place. Fast, private, and minimal.",
+    images: ["/social-preview.png"],
   },
   robots: {
     index: true,

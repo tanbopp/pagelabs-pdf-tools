@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { type Metadata } from "next";
 import { Header } from "@/components/layout-shell";
+import { ToolSeoSection } from "@/components/seo/ToolSeoSection";
+import { buildToolJsonLd, buildToolMetadata } from "@/lib/tool-seo";
 import { TOOL_REGISTRY } from "@pagelabs/shared";
 import { ChevronRight, ArrowLeft } from "lucide-react";
 
@@ -20,24 +22,7 @@ export async function generateMetadata({
   const tool = TOOL_REGISTRY[slug];
   if (!tool) return { title: "PageLabs" };
 
-  const title = `${tool.name} - Free Online PDF Tool | PageLabs`;
-  const description = `${tool.description} Fast, secure, and 100% free online PDF processing.`;
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      type: "website",
-      siteName: "PageLabs",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-    },
-  };
+  return buildToolMetadata(slug);
 }
 
 interface PlaceholderProps {
@@ -62,6 +47,10 @@ export default async function PlaceholderPage({ params }: PlaceholderProps) {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             {tool.name}
           </h1>
+          <p className="mt-3 max-w-2xl text-base font-medium text-muted-foreground">
+            This tool is on the roadmap and is not available yet. Follow the
+            repository on GitHub to be notified when it ships.
+          </p>
         </div>
 
         {/* Back to tools button */}
@@ -75,6 +64,12 @@ export default async function PlaceholderPage({ params }: PlaceholderProps) {
           </Link>
         </div>
       </main>
+
+      <ToolSeoSection slug={slug} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildToolJsonLd(slug)) }}
+      />
     </div>
   );
 }

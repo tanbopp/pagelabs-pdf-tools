@@ -1,32 +1,24 @@
 import type { Metadata } from "next";
-import { TOOL_REGISTRY } from "@pagelabs/shared";
+import { ToolSeoSection } from "@/components/seo/ToolSeoSection";
+import { buildToolJsonLd, buildToolMetadata } from "@/lib/tool-seo";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const tool = TOOL_REGISTRY["edit-pdf"];
-  const title = tool ? `${tool.name} - Free Online PDF Tool` : "Edit PDF";
-  const description = tool ? `${tool.description} Fast, secure, and 100% free online PDF processing on tanbopp.cloud.` : "Clean, modern online PDF editing tools.";
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: "/tools/edit-pdf",
-    },
-    openGraph: {
-      title: `${title} | PageLabs`,
-      description,
-      url: "https://pagelabs.tanbopp.cloud/tools/edit-pdf",
-      type: "website",
-      siteName: "PageLabs",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${title} | PageLabs`,
-      description,
-    },
-  };
+const SLUG = "edit-pdf";
+
+export function generateMetadata(): Metadata {
+  return buildToolMetadata(SLUG);
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
+  const jsonLd = buildToolJsonLd(SLUG);
 
+  return (
+    <>
+      {children}
+      <ToolSeoSection slug={SLUG} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+    </>
+  );
+}

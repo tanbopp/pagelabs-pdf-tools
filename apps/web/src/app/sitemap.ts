@@ -20,6 +20,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/faq`,
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/privacy`,
       lastModified,
       changeFrequency: "monthly",
@@ -33,7 +39,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  // All 30 PDF Tools (Dynamic Registry)
+  // Every tool in the shared registry (available and coming soon)
   const toolPages: MetadataRoute.Sitemap = Object.keys(TOOL_REGISTRY).map((slug) => ({
     url: `${baseUrl}/tools/${slug}`,
     lastModified,
