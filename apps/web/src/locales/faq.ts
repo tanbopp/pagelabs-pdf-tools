@@ -39,7 +39,7 @@ export const faqLocales: Record<"en" | "id", FaqLocaleContent> = {
             id: "keep-copy",
             question: "Do you keep a copy of my files?",
             answer:
-              "No. Files are permanently deleted from our servers 2 hours after processing. You can also delete them manually right after downloading your result. We do not retain any backups.",
+              "No. Nothing is uploaded, so there is no server copy or backup. The file stays in your browser tab and is discarded when you close it.",
           },
           {
             id: "need-account",
@@ -63,7 +63,7 @@ export const faqLocales: Record<"en" | "id", FaqLocaleContent> = {
             id: "merge-pdf",
             question: "How do I merge PDFs?",
             answer:
-              "Upload multiple files to the Merge PDF tool, drag them into your preferred order, and click Merge. You can combine multiple documents into a single, cohesive PDF in seconds.",
+              "Select multiple files to the Merge PDF tool, drag them into your preferred order, and click Merge. You can combine multiple documents into a single, cohesive PDF in seconds.",
           },
           {
             id: "split-pdf",
@@ -159,7 +159,7 @@ export const faqLocales: Record<"en" | "id", FaqLocaleContent> = {
             id: "jpg-to-pdf",
             question: "How do I convert JPG to PDF?",
             answer:
-              "Use JPG to PDF to compile images into a PDF. You can upload multiple images, drag to reorder them, and adjust orientation and page margins before downloading.",
+              "Use JPG to PDF to compile images into a PDF. You can select multiple images, drag to reorder them, and adjust orientation and page margins before downloading.",
           },
           {
             id: "html-to-pdf",
@@ -201,7 +201,7 @@ export const faqLocales: Record<"en" | "id", FaqLocaleContent> = {
             id: "heic-to-jpg",
             question: "How do I convert HEIC to JPG?",
             answer:
-              "Use the HEIC to JPG tool. Upload your Apple photos, choose the quality, and download the standard JPG files (packaged in a ZIP).",
+              "Use the HEIC to JPG tool. Select your Apple photos, choose the quality, and download the standard JPG files (packaged in a ZIP).",
           },
         ],
       },
@@ -225,7 +225,7 @@ export const faqLocales: Record<"en" | "id", FaqLocaleContent> = {
             id: "sign-pdf",
             question: "How do I sign a PDF?",
             answer:
-              "Use Sign PDF to draw your signature directly on the canvas, type your initials, or upload an image file of your signature. You can position and scale signatures across any page.",
+              "Use Sign PDF to draw your signature directly on the canvas, type your initials, or pick an image file of your signature. You can position and scale signatures across any page.",
           },
           {
             id: "redact-pdf",

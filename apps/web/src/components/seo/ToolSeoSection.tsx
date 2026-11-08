@@ -60,9 +60,7 @@ export function ToolSeoSection({ slug }: ToolSeoSectionProps) {
                 Private by default
               </h3>
               <p className="mt-2 text-base font-medium leading-relaxed text-muted-foreground">
-                PageLabs sets no tracking cookies and shows no ads. Your upload is
-                processed in an isolated worker, generated files are purged on a
-                schedule, and everything is shredded within two hours.
+                PageLabs sets no tracking cookies and shows no ads. Every file is opened and processed inside your browser, so nothing is ever uploaded to a server.
               </p>
               <p className="mt-3 text-sm font-semibold text-muted-foreground">
                 Open source under the MIT license —{" "}

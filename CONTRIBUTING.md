@@ -44,8 +44,8 @@ expected to uphold it. Report unacceptable behaviour to the maintainer listed in
 | --- | --- |
 | Node.js | `>= 20` |
 | pnpm | `>= 9` |
-| Python | `>= 3.11` (worker) |
-| Docker | optional, for Postgres / Redis / MinIO |
+| Python | not required |
+| Docker | not required |
 
 ### Install
 
@@ -53,58 +53,47 @@ expected to uphold it. Report unacceptable behaviour to the maintainer listed in
 git clone https://github.com/tanbopp/pagelabs-pdf-tools.git
 cd pagelabs-pdf-tools
 pnpm install
-cp .env.example .env
 ```
 
 ### Run
 
 ```bash
-# Web (http://localhost:3000) + API (http://localhost:3001)
+# Web app on http://localhost:3000
 pnpm dev
-
-# Or individually
-pnpm dev:web
-pnpm dev:api
 ```
 
-### Python worker (optional)
-
-Only needed if you want to run real processing jobs locally.
-
-```bash
-cd apps/worker
-python -m venv venv
-# Windows: .\venv\Scripts\activate
-# macOS/Linux: source venv/bin/activate
-pip install -r requirements.txt
-```
-
-Many recipes also need system binaries: `qpdf`, `ghostscript`, `libreoffice`, `tesseract-ocr`.
-Check `apps/worker/Dockerfile` for the exact list used in production.
+There is no separate API or worker process. Every tool runs in the browser.
 
 ## Repository layout
 
 ```text
-apps/web      Next.js 16 App Router frontend (all tool UIs)
-apps/api      Hono API gateway: uploads, jobs, rate limiting, queue
-apps/worker   Python recipes (one file per tool) + CLI runner
-packages/shared  Tool registry, Zod option schemas, shared types
+apps/web                 Next.js 16 App Router frontend (all tool UIs)
+apps/web/src/lib/local   Browser processing engine (pdf-lib, pdf.js, tesseract.js)
+packages/shared          Tool registry, Zod option schemas, shared types
 ```
 
 The **tool registry** in `packages/shared/src/tools.ts` is the single source of truth. It drives the
 homepage grid, the sitemap, and per-tool SEO. Categories live in `TOOL_CATEGORIES` in the same file.
+
+The **local engine** in `apps/web/src/lib/local/` owns all file handling. `jobs.ts` maps a tool slug
+to a processor and exposes a small in-memory job object; `tools-pdf.ts` and `tools-convert.ts` contain
+the operations. Nothing in this folder may call `fetch` — files must stay on the device.
 
 ## Adding a new tool
 
 1. Add a `ToolDefinition` entry to `TOOL_REGISTRY` in `packages/shared/src/tools.ts` with a unique
    `slug`, name, description, category, lucide `icon` name, accepted file types, and a Zod
    `optionsSchema` if the tool takes options.
-2. Implement the recipe in `apps/worker/src/recipes/<slug>.py` and register it in
-   `apps/worker/src/runner.py`.
+2. Implement the browser processor in `apps/web/src/lib/local/tools-pdf.ts` (or
+   `tools-convert.ts`) and register it in the `PROCESSORS` map in `apps/web/src/lib/local/jobs.ts`.
+   If the operation is impossible in a browser, leave it out of the map — the UI will surface the
+   standard "Browser limitations" message.
 3. Add the UI under `apps/web/src/app/tools/<slug>/page.tsx` (client component using the shared
    `ToolLayout` / `ToolShell` components) plus a `layout.tsx` with `generateMetadata` for SEO.
-4. Add tests: a pytest case in `apps/worker/tests/` and, if you touched schemas, a case in
-   `packages/shared`.
+   Start the job with `startJob(slug, files, options)` and poll it with `getJob(jobId)`; never
+   upload a file.
+4. Add tests: a case in `packages/shared` when you touch schemas or the registry, and a manual
+   pass through the tool page (check the Network tab stays silent).
 5. Mention the tool in `README.md` if the tool count changes.
 
 ## Design rules
@@ -124,20 +113,17 @@ See [`DESIGN.md`](./DESIGN.md) for the full token list.
 ```bash
 # TypeScript unit/schema tests
 pnpm --filter @pagelabs/shared test
-pnpm --filter @pagelabs/api test
-
-# Python worker tests (from apps/worker)
-pytest tests/
 
 # Type checking and linting
 pnpm typecheck
 pnpm lint
 
-# Full production build of every workspace
+# Full production build
 pnpm build
 ```
 
-CI runs install + tests + build on every push and pull request (`.github/workflows/ci.yml`).
+CI runs install + tests + typecheck + build on every push and pull request
+(`.github/workflows/ci.yml`).
 
 ## Commit messages
 

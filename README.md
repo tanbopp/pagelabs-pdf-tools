@@ -5,7 +5,7 @@
 **Every PDF tool. One place.**
 
 Clean, privacy-first PDF tools that do the job and get out of the way.
-No signup. No cookies. No ads. Your files are shredded after processing.
+No signup. No cookies. No ads. **Your files never leave your device.**
 
 [**Try it live →**](https://pagelabs.tanbopp.cloud) · [Report a bug](https://github.com/tanbopp/pagelabs-pdf-tools/issues/new?template=bug_report.md) · [Request a feature](https://github.com/tanbopp/pagelabs-pdf-tools/issues/new?template=feature_request.md) · [Discussions](https://github.com/tanbopp/pagelabs-pdf-tools/discussions)
 
@@ -13,8 +13,8 @@ No signup. No cookies. No ads. Your files are shredded after processing.
 ![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)
 ![Tools](https://img.shields.io/badge/tools-31%20live-black.svg)
 ![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)
-![Hono](https://img.shields.io/badge/API-Hono-black.svg)
-![Python 3.12](https://img.shields.io/badge/worker-Python%203.12-black.svg)
+![100% client-side](https://img.shields.io/badge/processing-100%25%20client--side-black.svg)
+![No database](https://img.shields.io/badge/database-none-black.svg)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-black.svg)
 
 </div>
@@ -29,17 +29,19 @@ Most online PDF tools are ad farms. They upload your contracts and tax returns t
 servers, nag you to subscribe, watermark the result, and set a dozen tracking cookies along the
 way.
 
-PageLabs is the opposite: a flat, fast, open-source suite that does the work and deletes your
-file afterwards. If you would rather run it yourself, the whole stack is in this repository and
-ships with Docker.
+PageLabs is the opposite: a flat, fast, open-source suite that runs **entirely inside your
+browser**. There is no upload endpoint, no database and no worker — the document is read with
+`pdf-lib`/`pdf.js` and processed on your own CPU. If you would rather run it yourself, a single
+Next.js app is all you need.
 
-- **Privacy-first by architecture** — ephemeral storage, a scheduled purge, worker temp
-  directories removed after every job, and **zero tracking cookies**.
+- **Privacy by architecture** — files are opened with the File API and processed in the browser.
+  Nothing is sent over the network, there is no storage bucket to purge, and there are **zero
+tracking cookies**.
 - **31 working tools** — the boring essentials (merge, compress, rotate) and the awkward ones
   (OCR, redact, compare, PDF/A).
 - **No watermark, no account, no export paywall.**
-- **Self-hostable** — Docker Compose for a single host, or split the web app on Vercel from the
-  API and worker containers.
+- **Deploy anywhere static-ish** — one `next build` on Vercel, Netlify, Cloudflare or your own
+  box. No server environment variables required.
 - **Open source, MIT licensed.** Read the code before you trust it with a document.
 
 ![How PageLabs works](docs/demo.gif)
@@ -139,14 +141,15 @@ Screenshots are regenerated with `node scripts/capture-docs.mjs` (see [docs/](do
 
 - **Flat, shadowless design.** No gradients, no elevation, no glass effects. Depth comes from
   1px borders and surface contrast only, with generous 24px radii and Manrope typography.
-- **Privacy by default.** Files live in ephemeral storage, generated files are purged on a
-  schedule, everything is shredded within two hours, and worker temp directories are deleted
-  after each job. PageLabs sets no cookies and uses no analytics.
-- **Security hardened.** Content Security Policy, `X-Frame-Options: DENY`,
-  `X-Content-Type-Options: nosniff`, magic-byte upload validation (not just the declared MIME
-  type), subprocess shell sanitisation, and directory traversal prevention.
-- **Built for heavy files.** Out-of-memory handling in the worker, queued jobs with retries, and
-  per-IP rate limiting (10 jobs/hour) so one user cannot starve the queue.
+- **Privacy by default.** Uploads do not exist. The browser reads the file you picked, the
+  resulting bytes become a `blob:` URL, and nothing is written to a server. PageLabs sets no
+  cookies and uses no analytics.
+- **Security by subtraction.** With no upload endpoint there is no storage to leak, no signed-URL
+  surface and no queue to poison. A strict Content Security Policy,
+  `X-Frame-Options: DENY` and `X-Content-Type-Options: nosniff` still ship with the app.
+- **Bounded resource use.** Every processor is client-side and streams through `pdf.js`/
+  `pdf-lib`; heavy work (OCR, rasterisation) reports progress instead of blocking the UI, and
+  the tab stays responsive.
 - **Accessible.** Full keyboard navigation, screen-reader labels, visible focus rings, and
   respect for `prefers-reduced-motion`.
 
@@ -156,11 +159,12 @@ Screenshots are regenerated with `node scripts/capture-docs.mjs` (see [docs/](do
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | Next.js 16 (App Router, Turbopack, Server Components), Tailwind CSS v4, Radix UI, dnd-kit, pdf.js, pdf-lib |
-| API gateway | Hono on Node.js, Zod validation, SQLite or PostgreSQL, Redis + BullMQ |
-| Processing | Python 3.12 with pikepdf, qpdf, Ghostscript, pdfplumber, ocrmypdf, ReportLab, WeasyPrint, Playwright, pdf2docx, openpyxl |
-| Storage | MinIO, AWS S3 or Cloudflare R2 |
-| Infrastructure | Docker and Docker Compose; the web app also deploys to Vercel |
+| Frontend | Next.js 16 (App Router, Turbopack), React 19, Tailwind CSS v4, Radix UI, dnd-kit |
+| PDF engine | `pdf-lib` (merge, split, rotate, crop, watermark, page numbers, forms, signing) and `pdf.js` (rasterising, text extraction) |
+| Conversions | `jspdf`, `docx`, `xlsx`, `pptxgenjs`, `jszip` |
+| OCR | `tesseract.js` (WASM, runs in the tab) |
+| Images | `heic2any` for HEIC → JPG |
+| Hosting | Static/SSR Next.js output — Vercel, Netlify, Cloudflare or self-hosted |
 
 ---
 
@@ -169,19 +173,20 @@ Screenshots are regenerated with `node scripts/capture-docs.mjs` (see [docs/](do
 ```text
 pagelabs-pdf-tools/
 ├── apps/
-│   ├── api/          # Hono API gateway: uploads, jobs, rate limiting, queue
-│   ├── web/          # Next.js 16 app: tool UIs, tool registry driven SEO
-│   └── worker/       # Python processing recipes + CLI runner
+│   └── web/          # Next.js 16 app: tool UIs, browser processors, SEO
+│       └── src/lib/local/   # The client-side engine (pdf-lib / pdf.js / tesseract.js)
 ├── packages/
 │   └── shared/       # Zod schemas, tool registry, shared types
 ├── docs/             # Screenshots, social preview, capture script notes
-├── prd/              # Product requirement documents for each tool stage
-├── docker-compose.yml       # Local dev services (Postgres, Redis, MinIO)
-└── docker-compose.prod.yml  # Single-host production deployment
+└── prd/              # Product requirement documents for each tool stage
 ```
 
 The **tool registry** in `packages/shared/src/tools.ts` is the single source of truth: it drives
 the homepage grid, the sitemap, per-tool metadata and the FAQ copy.
+
+The **local engine** in `apps/web/src/lib/local/` is the single processing layer: `jobs.ts`
+validates the tool slug and runs the matching processor, while `tools-pdf.ts` and
+`tools-convert.ts` hold the individual operations. There is no network call in that folder.
 
 ---
 
@@ -191,72 +196,47 @@ the homepage grid, the sitemap, per-tool metadata and the FAQ copy.
 
 - Node.js **20+**
 - pnpm **9+**
-- Python **3.11+** (only for the worker)
-- Docker and Docker Compose (optional, for Redis / MinIO / Postgres)
+
+That is all. There is no database, no Redis, no Python and no system package to install.
 
 ### 1. Clone and install
 
 ```bash
 git clone https://github.com/tanbopp/pagelabs-pdf-tools.git
 cd pagelabs-pdf-tools
-
-cp .env.example .env
 pnpm install
 ```
 
-### 2. Python worker (optional)
-
-```bash
-cd apps/worker
-python -m venv venv
-# Windows:
-.\venv\Scripts\activate
-# Linux / macOS:
-source venv/bin/activate
-
-pip install -r requirements.txt
-cd ../..
-```
-
-Some recipes also need system binaries: `qpdf`, `ghostscript`, `libreoffice`, `tesseract-ocr`.
-`apps/worker/Dockerfile` lists the exact packages used in production.
-
-### 3. Start infrastructure (recommended)
-
-```bash
-docker compose up -d
-```
-
-### 4. Run the apps
+### 2. Run the app
 
 ```bash
 pnpm dev
 ```
 
 - Web app: <http://localhost:3000>
-- API gateway: <http://localhost:3001>
+
+Open DevTools → Network while using a tool: the only requests are for the page itself, the
+`pdf.worker.min.mjs` asset and (first time only) OCR language data. Your document is never sent
+anywhere.
 
 ---
 
 ## Self-hosting
 
-### Option A — Docker Compose on a single host
+### Option A — Vercel (recommended)
+
+Import the repository, leave the root directory at the repo root and deploy. `vercel.json`
+runs `pnpm build:vercel` and publishes `apps/web/.next`. **No environment variables are needed.**
+
+### Option B — Any Node host / static export
 
 ```bash
-cp .env.production.example .env.production
-# edit .env.production: secrets, database URL, storage credentials, public URL
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+pnpm build
+pnpm --filter web start
 ```
 
-### Option B — Split deployment
-
-- **Web (`apps/web`)** → Vercel or Cloudflare Pages. Root directory `apps/web`, build command
-  `pnpm build`, and set `NEXT_PUBLIC_API_URL` to your API URL.
-- **API (`apps/api`)** → Railway, Render or Fly.io using `apps/api/Dockerfile`.
-- **Worker (`apps/worker`)** → Railway or ECS using `apps/worker/Dockerfile`, with CPU/RAM sized
-  for your largest documents.
-- **Database + storage** → managed PostgreSQL (Neon, Supabase) and S3-compatible object storage
-  (Cloudflare R2, MinIO).
+Because every processor runs in the browser, you can also serve the app from a CDN or a single
+small container. There are no S3 buckets, queues or database migrations to manage.
 
 ---
 
@@ -265,10 +245,6 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d --bui
 ```bash
 # TypeScript unit and schema tests
 pnpm --filter @pagelabs/shared test
-pnpm --filter @pagelabs/api test
-
-# Python worker tests
-cd apps/worker && pytest tests/
 
 # Typecheck, lint and full production build
 pnpm typecheck
@@ -276,7 +252,9 @@ pnpm lint
 pnpm build
 ```
 
-CI runs install, tests, typecheck and build on every push and pull request.
+The browser processors are exercised manually through each tool page; the shared schemas and
+tool registry are covered by unit tests. CI runs install, tests, typecheck and build on every push
+and pull request.
 
 ---
 

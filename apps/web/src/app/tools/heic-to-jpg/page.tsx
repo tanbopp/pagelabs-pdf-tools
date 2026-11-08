@@ -1,6 +1,6 @@
 "use client";
 
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 import React, { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/layout-shell";
 import {
@@ -13,7 +13,6 @@ import {
 import { toast } from "sonner";
 import { ArrowRight, Image as ImageIcon, Trash2, Plus } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 interface HeicFileItem {
   id: string;
@@ -109,15 +108,14 @@ export default function HeicToJpgPage() {
     if (status === "processing" && jobId) {
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
-          if (!res.ok) throw new Error("Failed to query job status");
-          const data = await res.json();
+          const data = getJob(jobId);
+          if (!data) return;
 
           if (data.status === "completed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setStatus("completed");
             setResultData({
-              downloadUrl: `${API_BASE}${data.result_url}`,
+              downloadUrl: data.result_url || "",
               resultSize: data.result_size || 0,
               filename: `${outputBaseName}.zip`,
             });
@@ -141,60 +139,16 @@ export default function HeicToJpgPage() {
     setErrorMessage(null);
 
     try {
-      const uploadedFiles = [];
-
-      for (const item of items) {
-        const signRes = await fetch(`${API_BASE}/api/v1/uploads/sign`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: item.file.name,
-            size: item.file.size,
-            contentType: item.file.type || "image/heic",
-          }),
-        });
-        if (!signRes.ok) {
-          const errMsg = await parseApiError(signRes, `Failed to sign upload for ${item.file.name}`);
-          throw new Error(errMsg);
-        }
-        const { uploadUrl, fileUrl } = await signRes.json();
-
-        const uploadRes = await fetch(uploadUrl, {
-          method: "PUT",
-          body: item.file,
-          headers: { "Content-Type": item.file.type || "image/heic" },
-        });
-        if (!uploadRes.ok) {
-          throw new Error(`Upload failed for ${item.file.name}`);
-        }
-
-        uploadedFiles.push({
-          url: fileUrl,
-          name: item.file.name,
-          size: item.file.size,
-        });
-      }
-
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const jobBody = {
           tool: "heic-to-jpg",
-          files: uploadedFiles,
+
           options: {
             quality,
             outputFilename: `${outputBaseName}.zip`,
           },
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to start conversion job");
-        throw new Error(errMsg);
-      }
-
-      const jobData = await jobRes.json();
-      setJobId(jobData.job_id || jobData.jobId);
+        };
+      const { jobId: newJobId } = startJob(jobBody.tool, items.map((item) => item.file), jobBody.options || {});
+      setJobId(newJobId);
     } catch (err: unknown) {
       setStatus("failed");
       setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");

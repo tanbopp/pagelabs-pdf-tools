@@ -12,10 +12,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint-and-test:
+  build:
     name: Install, test and build
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -41,9 +41,6 @@ jobs:
       - name: Run shared tests
         run: pnpm --filter @pagelabs/shared test
 
-      - name: Run API tests
-        run: pnpm --filter @pagelabs/api test
-
       - name: Typecheck
         run: pnpm typecheck
 
@@ -51,52 +48,3 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
-          NEXT_PUBLIC_API_URL: "http://localhost:3001"
-
-  worker-tests:
-    name: Python worker tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: apps/worker/requirements.txt
-
-      # pdf-tables-to-excel pulls in Docling, which downloads layout/table models on
-      # first use. Cache them so repeat runs stay fast.
-      - name: Cache Docling models
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/docling
-            ~/.cache/huggingface
-          key: docling-${{ runner.os }}-${{ hashFiles('apps/worker/requirements.txt') }}
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            qpdf ghostscript tesseract-ocr libtesseract-dev poppler-utils
-
-      - name: Install Python dependencies
-        working-directory: apps/worker
-        # Same file the Dockerfile uses, so CI and the worker image cannot drift.
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run worker tests
-        working-directory: apps/worker
-        # test_e2e_*.py drive a live API on localhost:3001 and test_tahap4.py needs a
-        # full LibreOffice/WeasyPrint stack, so neither belongs in a unit-test job.
-        run: |
-          pytest tests/ -q \
-            --ignore-glob="tests/test_e2e_*.py" \
-            --ignore=tests/test_tahap4.py

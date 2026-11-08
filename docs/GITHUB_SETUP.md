@@ -14,7 +14,7 @@ assumes you are in the repository root.
 gh repo edit tanbopp/pagelabs-pdf-tools \
   --description "Clean, privacy-first suite of 30+ PDF tools: merge, compress, convert, OCR and more. Files shredded after processing. Free and open source." \
   --homepage "https://pagelabs.tanbopp.cloud" \
-  --add-topic pdf-tools,pdf-processing,pdf-converter,pdf-compressor,ocr,privacy-first,open-source,nextjs,hono,typescript,python,tailwindcss,monorepo,pnpm,docker,bullmq,ghostscript,pikepdf,vercel \
+  --add-topic pdf-tools,pdf-processing,pdf-converter,pdf-compressor,ocr,privacy-first,open-source,nextjs,typescript,client-side,webassembly,pdf-lib,tailwindcss,monorepo,pnpm,vercel \
   --enable-discussions
 ```
 

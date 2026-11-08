@@ -1,6 +1,6 @@
 "use client";
 
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
@@ -46,7 +46,6 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 // Distinct modern color-coding palette for multi-file items (Dark/Light neutral compliant)
 const FILE_COLOR_PALETTES = [
@@ -421,15 +420,14 @@ export default function OrganizePdfPage() {
     if (status === "processing" && jobId) {
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
-          if (!res.ok) throw new Error("Failed to query status");
-          const data = await res.json();
+          const data = getJob(jobId);
+          if (!data) return;
 
           if (data.status === "completed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setStatus("completed");
             setResultData({
-              downloadUrl: `${API_BASE}${data.result_url}`,
+              downloadUrl: data.result_url || "",
               resultSize: data.result_size || 0,
               filename: `${outputBaseName}.pdf`,
             });
@@ -454,37 +452,6 @@ export default function OrganizePdfPage() {
     setErrorMessage(null);
 
     try {
-      // 1. Upload all unique files in filesList
-      const uploadedMap = new Map<string, { url: string; name: string; size: number }>();
-      const uploadedFilesArray: { url: string; name: string; size: number }[] = [];
-
-      for (let i = 0; i < filesList.length; i++) {
-        const item = filesList[i];
-        const signRes = await fetch(`${API_BASE}/api/v1/uploads/sign`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: item.file.name,
-            size: item.file.size,
-            contentType: item.file.type || "application/pdf",
-          }),
-        });
-        if (!signRes.ok) throw new Error("Failed to sign upload URL");
-        const { uploadUrl, fileUrl } = await signRes.json();
-
-        const uploadRes = await fetch(uploadUrl, {
-          method: "PUT",
-          body: item.file,
-          headers: { "Content-Type": "application/pdf" },
-        });
-        if (!uploadRes.ok) throw new Error(`Failed to upload ${item.file.name}`);
-
-        const fileRecord = { url: fileUrl, name: item.file.name, size: item.file.size };
-        uploadedMap.set(item.id, fileRecord);
-        uploadedFilesArray.push(fileRecord);
-      }
-
-      // 2. Prepare pages spec with exact fileIndex
       const pagesPayload = pages.map((p) => {
         if (p.isBlank) {
           return {
@@ -503,29 +470,19 @@ export default function OrganizePdfPage() {
         };
       });
 
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const jobBody = {
           tool: "organize-pdf",
-          files: uploadedFilesArray,
+
           options: {
             pages: pagesPayload,
             outputFilename: `${outputBaseName}.pdf`,
           },
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to process job");
-        throw new Error(errMsg);
-      }
-
-      const { jobId: newId } = await jobRes.json();
-      setJobId(newId);
+        };
+      const { jobId: newJobId } = startJob(jobBody.tool, filesList.map((f) => f.file), jobBody.options || {});
+      setJobId(newJobId);
     } catch (err: unknown) {
       setStatus("failed");
-      setErrorMessage(err instanceof Error ? err.message : "Failed to organize file");
+      setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");
     }
   };
 

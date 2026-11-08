@@ -69,7 +69,7 @@ export function Footer() {
         <div className="flex items-center gap-4">
           <span>PageLabs — Pure utility. Zero noise.</span>
           <span className="hidden sm:inline">·</span>
-          <span>No cookies · Files shredded in 2h</span>
+          <span>No cookies · Files never leave your device</span>
         </div>
         <div className="flex items-center gap-6">
           <Link href="/about" className="hover:text-foreground transition-colors">

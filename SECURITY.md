@@ -51,15 +51,15 @@ We will credit reporters in the advisory unless you ask us not to.
 In scope:
 
 - The hosted application at `pagelabs.tanbopp.cloud`
-- The API gateway (`apps/api`) and worker (`apps/worker`) code in this repository
-- Upload handling, file storage, signed URLs, and the purge/retention logic
-- Anything that breaks the "files are shredded after processing" or "no cookies / no trackers"
-  promises
+- The browser processing engine (`apps/web/src/lib/local`) and the tool pages that call it
+- Anything that causes a file to be sent over the network, persisted on a server, or logged
+- Anything that breaks the "files never leave your device" or "no cookies / no trackers" promises
+- Cross-site scripting or data exfiltration from a crafted document handled by a processor
 
 Out of scope:
 
-- Denial-of-service through intentionally huge or malformed files on the public instance
-  (report it anyway if it is cheap to trigger — we still want to know)
+- Denial-of-service through intentionally huge or malformed files: processing happens on the
+  reporter's own machine, so it cannot affect other users
 - Findings that require a compromised device or browser extension
 - Social engineering of maintainers
 - Best-practice suggestions with no demonstrable impact (open a normal issue instead)
@@ -67,10 +67,15 @@ Out of scope:
 ## Our security commitments
 
 - No third-party analytics, trackers, or advertising cookies.
-- Uploaded files are stored ephemerally and purged on a schedule.
-- Worker temp directories are removed after each job.
-- Uploads are validated by magic bytes, not just the declared MIME type.
+- Files are opened with the File API and processed in the browser. There is no upload endpoint,
+  no object storage, no database and no queue.
+- Results are `blob:` URLs scoped to the current tab; closing the tab discards them.
+- Document parsing happens inside the browser sandbox (pdf.js, pdf-lib, WebAssembly), so a
+  malicious document cannot compromise a shared server.
+- The web app ships a strict Content Security Policy, `X-Frame-Options: DENY` and
+  `X-Content-Type-Options: nosniff`.
 
-See `PAGELABS_TECHNOLOGY.md` and `DESIGN.md` for the full architecture and threat model notes.
+See `PAGELABS_TECHNOLOGY.md` and `DESIGN.md` for background notes on how the browser pipeline
+was chosen.
 
 Thank you for helping keep PageLabs and its users safe.

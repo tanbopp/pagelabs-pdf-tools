@@ -1,5 +1,5 @@
 "use client";
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -15,7 +15,6 @@ import {
 import { toast } from "sonner";
 import { ChevronRight, ArrowRight, RefreshCcw, Image as ImageIcon, Trash2 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function ScanToPdfPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -62,15 +61,14 @@ export default function ScanToPdfPage() {
     if (status === "processing" && jobId) {
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
-          if (!res.ok) throw new Error("Failed to query status");
-          const data = await res.json();
+          const data = getJob(jobId);
+          if (!data) return;
 
           if (data.status === "completed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setStatus("completed");
             setResultData({
-              downloadUrl: `${API_BASE}${data.result_url}`,
+              downloadUrl: data.result_url || "",
               resultSize: data.result_size || 0,
               filename: `${outputBaseName}.pdf`,
             });
@@ -98,55 +96,16 @@ export default function ScanToPdfPage() {
     setErrorMessage(null);
 
     try {
-      const uploadedFiles = [];
-
-      for (const f of files) {
-        const signRes = await fetch(`${API_BASE}/api/v1/uploads/sign`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: f.name,
-            size: f.size,
-            contentType: f.type || "image/jpeg",
-          }),
-        });
-        if (!signRes.ok) throw new Error(`Failed to upload ${f.name}`);
-        const { uploadUrl, fileUrl } = await signRes.json();
-
-        const uploadRes = await fetch(uploadUrl, {
-          method: "PUT",
-          body: f,
-          headers: { "Content-Type": f.type || "image/jpeg" },
-        });
-        if (!uploadRes.ok) throw new Error(`Upload failed for ${f.name}`);
-
-        uploadedFiles.push({
-          url: fileUrl,
-          name: f.name,
-          size: f.size,
-        });
-      }
-
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const jobBody = {
           tool: "scan-to-pdf",
-          files: uploadedFiles,
+
           options: {
             autoDeskew,
             outputFilename: `${outputBaseName}.pdf`,
           },
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to process job");
-        throw new Error(errMsg);
-      }
-
-      const jobData = await jobRes.json();
-      setJobId(jobData.job_id || jobData.jobId);
+        };
+      const { jobId: newJobId } = startJob(jobBody.tool, [...files], jobBody.options || {});
+      setJobId(newJobId);
     } catch (err: unknown) {
       setStatus("failed");
       setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");

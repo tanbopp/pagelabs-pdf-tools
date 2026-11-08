@@ -7,6 +7,23 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed — architecture
+
+- **PageLabs is now 100% client-side.** Every tool runs in the browser and files never leave the
+  device. The `apps/api` gateway, the `apps/worker` Python service, the SQLite/PostgreSQL schema,
+  Redis/BullMQ queue, S3/MinIO storage and both Docker Compose files were removed.
+- New local engine in `apps/web/src/lib/local/`: `jobs.ts` dispatches by tool slug, `tools-pdf.ts`
+  handles organise/edit/optimise operations with `pdf-lib`, and `tools-convert.ts` handles
+  rasterising (`pdf.js`), Office interop (`docx`, `xlsx`, `pptxgenjs`) and OCR (`tesseract.js`).
+- All 30 server-backed tool pages now store the selected `File` in React state, call
+  `startJob(slug, files, options)` and poll the in-memory job snapshot, so uploads and signed URLs
+  are gone. Results are `blob:` URLs created locally.
+- Five tools cannot be reproduced in a browser (`protect-pdf` encryption, `html-to-pdf` arbitrary
+  URLs, `pdf-to-pdfa` conformance, and the layout-faithful parts of Word/PowerPoint conversion).
+  They now return a clear "Browser limitations" message instead of failing silently.
+- CI no longer installs Python or Docling; it runs pnpm install, shared tests, typecheck and build.
+- `vercel.json` publishes `apps/web/.next` directly and no longer needs `NEXT_PUBLIC_API_URL`.
+
 ### Added
 
 - Screenshots, a demo GIF and a 1280×640 social preview in `docs/`.
@@ -29,11 +46,6 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - Removed a duplicate static `robots.txt` that shadowed the generated one.
-- Worker dependencies: `pdf-tables-to-excel` (used by `pdf_to_excel`) and
-  `pillow-heif` (used by `heic_to_jpg`) were imported but missing from
-  `apps/worker/requirements.txt`, so a fresh clone, CI and the production image all
-  failed with `ModuleNotFoundError`. Both are now pinned, and the Dockerfile installs
-  `requirements.txt` only, matching CI.
 
 ## [0.1.0] — 2026-11-07
 
