@@ -29,6 +29,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - Removed a duplicate static `robots.txt` that shadowed the generated one.
+- Worker dependencies: `pdf-tables-to-excel` (used by `pdf_to_excel`) and
+  `pillow-heif` (used by `heic_to_jpg`) were imported but missing from
+  `apps/worker/requirements.txt`, so a fresh clone, CI and the production image all
+  failed with `ModuleNotFoundError`. Both are now pinned, and the Dockerfile installs
+  `requirements.txt` only, matching CI.
 
 ## [0.1.0] — 2026-11-07
 

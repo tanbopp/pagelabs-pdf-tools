@@ -8,7 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install pdfplumber openpyxl
+# Single source of truth: requirements.txt. Do not add one-off pip installs here,
+# or the image will drift from CI and a fresh clone.
+# Note: pdf-tables-to-excel pulls in Docling, so this image is large (~4 GB).
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # Stage 2: Final Runtime
