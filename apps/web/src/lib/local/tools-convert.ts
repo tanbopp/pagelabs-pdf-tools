@@ -512,8 +512,8 @@ export async function comparePdf(
   ]);
 
   const total = Math.max(docA.numPages, docB.numPages);
-  const base = (options.outputFilename || "comparison").replace(/\.pdf$/i, "");
-  const entries: { name: string; data: Uint8Array }[] = [];
+  const base = (options.outputFilename || "comparison.pdf").replace(/\.pdf$/i, "");
+  const report = await PDFDocument.create();
 
   for (let i = 1; i <= total; i++) {
     const canvasA = i <= docA.numPages ? (await renderPage(docA, i, 110)).canvas : null;
@@ -562,7 +562,16 @@ export async function comparePdf(
     }
 
     const bytes = await canvasToBytes(diffCanvas, "image/png");
-    entries.push({ name: `${base}_page_${String(i).padStart(2, "0")}.png`, data: bytes });
+
+    const embedded = await report.embedPng(bytes);
+    const scale = Math.min(1, 595 / embedded.width);
+    const reportPage = report.addPage([embedded.width * scale, embedded.height * scale]);
+    reportPage.drawImage(embedded, {
+      x: 0,
+      y: 0,
+      width: embedded.width * scale,
+      height: embedded.height * scale,
+    });
 
     diffCanvas.width = 0;
     diffCanvas.height = 0;
@@ -577,13 +586,7 @@ export async function comparePdf(
     onProgress?.(Math.round((i / total) * 100));
   }
 
-  if (entries.length === 1) {
-    return { blob: toBlob(entries[0].data, "image/png"), filename: entries[0].name };
-  }
-
-  const zip = new JSZip();
-  for (const entry of entries) zip.file(entry.name, entry.data);
-  return { blob: await zip.generateAsync({ type: "blob" }), filename: `${base}.zip` };
+  return pdfResult(report, `${base}.pdf`);
 }
 
 function createBlank(width: number, height: number): HTMLCanvasElement {
