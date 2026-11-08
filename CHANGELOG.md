@@ -46,6 +46,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - Removed a duplicate static `robots.txt` that shadowed the generated one.
+- Browser tools that load runtime assets now work under the strict CSP. The OCR
+  engine's worker and WASM core are served from `/tesseract/`, and pdf.js reads
+  CMaps and standard fonts from `/pdfjs/`, so `importScripts` no longer fails with
+  "Failed to fetch". Job errors also surface the underlying message instead of a
+  generic "Processing failed in the browser."
 
 ## [0.1.0] — 2026-11-07
 

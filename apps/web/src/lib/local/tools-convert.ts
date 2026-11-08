@@ -436,11 +436,21 @@ export async function ocrPdf(
   const font = await output.embedFont("Helvetica");
 
   const worker = await Tesseract.createWorker(lang, 1, {
+    // Self-hosted worker + core: the CDN copies are blocked by the CSP, which
+    // surfaced as "Failed to fetch" / importScripts errors.
+    workerPath: "/tesseract/worker.min.js",
+    corePath: "/tesseract/tesseract-core-simd-lstm.wasm.js",
     logger: (message) => {
       if (message.status === "recognizing text" && typeof message.progress === "number") {
         onProgress?.(Math.round(message.progress * 100));
       }
     },
+  }).catch((err: unknown) => {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `OCR could not start (${detail}). The language data is downloaded once on first use — ` +
+        `check your connection and try again.`
+    );
   });
 
   try {
@@ -454,7 +464,10 @@ export async function ocrPdf(
       const page = output.addPage([pageWidth, pageHeight]);
       page.drawImage(embedded, { x: 0, y: 0, width: pageWidth, height: pageHeight });
 
-      const { data } = await worker.recognize(rendered.canvas);
+      const { data } = await worker.recognize(rendered.canvas).catch((err: unknown) => {
+        const detail = err instanceof Error ? err.message : String(err);
+        throw new Error(`OCR failed on page ${i}: ${detail}`);
+      });
       const words = (data as unknown as { words?: { text: string; bbox: { x0: number; y0: number; x1: number; y1: number } }[] }).words;
 
       if (Array.isArray(words) && words.length > 0) {

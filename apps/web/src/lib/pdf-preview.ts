@@ -39,6 +39,9 @@ export async function getPdfFirstPagePreview(file: File, targetWidth = 300): Pro
       data: new Uint8Array(arrayBuffer),
       useWorkerFetch: false,
       isEvalSupported: false,
+      cMapUrl: "/pdfjs/cmaps/",
+      cMapPacked: true,
+      standardFontDataUrl: "/pdfjs/standard_fonts/",
     });
 
     const pdfDocument = await loadingTask.promise;
@@ -97,6 +100,9 @@ export async function getPdfAllPagesPreview(
       data: new Uint8Array(arrayBuffer),
       useWorkerFetch: false,
       isEvalSupported: false,
+      cMapUrl: "/pdfjs/cmaps/",
+      cMapPacked: true,
+      standardFontDataUrl: "/pdfjs/standard_fonts/",
     });
 
     const pdfDocument = await loadingTask.promise;

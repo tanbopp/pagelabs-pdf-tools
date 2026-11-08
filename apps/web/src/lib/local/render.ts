@@ -42,6 +42,11 @@ export async function openPdfDocument(
     useWorkerFetch: false,
     isEvalSupported: false,
     disableFontFace: false,
+    // Served from /public so CJK/CID documents and standard-14 fonts render
+    // without reaching out to a CDN (which the CSP blocks).
+    cMapUrl: "/pdfjs/cmaps/",
+    cMapPacked: true,
+    standardFontDataUrl: "/pdfjs/standard_fonts/",
   }).promise;
 }
 

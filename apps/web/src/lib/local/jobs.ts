@@ -149,13 +149,22 @@ export function startJob(
       jobs.set(jobId, {
         status: "failed",
         progress: 0,
-        error_message:
-          err instanceof Error ? err.message : "Processing failed in the browser.",
+        error_message: describeError(err),
       });
     }
   })();
 
   return { jobId };
+}
+
+function describeError(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === "string" && err) return err;
+  if (err && typeof err === "object") {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === "string" && message) return message;
+  }
+  return "Processing failed in the browser.";
 }
 
 export function getJob(jobId: string): LocalJobSnapshot | undefined {
