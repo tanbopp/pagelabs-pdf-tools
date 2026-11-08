@@ -1,5 +1,5 @@
 "use client";
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -15,7 +15,6 @@ import {
 import { toast } from "sonner";
 import { ChevronRight, ArrowRight, RefreshCcw, Presentation } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function PowerpointToPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -54,15 +53,14 @@ export default function PowerpointToPdfPage() {
     if (status === "processing" && jobId) {
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
-          if (!res.ok) throw new Error("Failed to query status");
-          const data = await res.json();
+          const data = getJob(jobId);
+          if (!data) return;
 
           if (data.status === "completed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setStatus("completed");
             setResultData({
-              downloadUrl: `${API_BASE}/api/v1/download/${data.result_id}`,
+              downloadUrl: data.result_url || "",
               resultSize: data.result_size || 0,
               filename: `${outputBaseName.trim() || "presentation"}.pdf`,
             });
@@ -94,55 +92,16 @@ export default function PowerpointToPdfPage() {
     setErrorMessage(null);
 
     try {
-      const uploadRes = await fetch(`${API_BASE}/api/v1/upload`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type || "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-          size: file.size,
-        }),
-      });
-
-      if (!uploadRes.ok) {
-        throw new Error("Failed to obtain upload ticket");
-      }
-
-      const { uploadId, uploadUrl } = await uploadRes.json();
-
-      const putRes = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type || "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        },
-        body: file,
-      });
-
-      if (!putRes.ok) {
-        throw new Error("Failed to upload PowerPoint file");
-      }
-
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const jobBody = {
           tool: "powerpoint-to-pdf",
-          file_id: uploadId,
+
           options: {},
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to process job");
-        throw new Error(errMsg);
-      }
-
-      const { id } = await jobRes.json();
-      setJobId(id);
-    } catch (err: any) {
+        };
+      const { jobId: newJobId } = startJob(jobBody.tool, file ? [file] : [], jobBody.options || {});
+      setJobId(newJobId);
+    } catch (err: unknown) {
       setStatus("failed");
-      setErrorMessage(err.message || "An unexpected error occurred");
-      toast.error(err.message || "An error occurred");
+      setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");
     }
   };
 

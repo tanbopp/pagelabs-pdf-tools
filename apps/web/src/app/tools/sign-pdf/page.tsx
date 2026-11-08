@@ -1,5 +1,5 @@
 "use client";
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -18,7 +18,6 @@ import { toast } from "sonner";
 import { ChevronRight, ArrowRight, RefreshCcw, PenTool, RotateCcw } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function SignPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -79,15 +78,14 @@ export default function SignPdfPage() {
     if (status === "processing" && jobId) {
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
-          if (!res.ok) throw new Error("Failed to query status");
-          const data = await res.json();
+          const data = getJob(jobId);
+          if (!data) return;
 
           if (data.status === "completed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setStatus("completed");
             setResultData({
-              downloadUrl: `${API_BASE}${data.result_url}`,
+              downloadUrl: data.result_url || "",
               resultSize: data.result_size || 0,
               filename: `${outputBaseName}.pdf`,
             });
@@ -117,43 +115,9 @@ export default function SignPdfPage() {
     setErrorMessage(null);
 
     try {
-      const signRes = await fetch(`${API_BASE}/api/v1/uploads/sign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          size: file.size,
-          contentType: "application/pdf",
-        }),
-      });
-      if (!signRes.ok) {
-        const errMsg = await parseApiError(signRes, "Failed to sign upload");
-        throw new Error(errMsg);
-      }
-      const { uploadUrl, fileUrl } = await signRes.json();
-
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": "application/pdf" },
-      });
-      if (!uploadRes.ok) {
-        const uploadErrText = await uploadRes.text().catch(() => "");
-        throw new Error(`Upload failed (${uploadRes.status}): ${uploadErrText || uploadRes.statusText}`);
-      }
-
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const jobBody = {
           tool: "sign-pdf",
-          files: [
-            {
-              url: fileUrl,
-              name: file.name,
-              size: file.size,
-            },
-          ],
+
           options: {
             page: page === "last" ? "last" : Number(page),
             position,
@@ -161,16 +125,9 @@ export default function SignPdfPage() {
             signatureImage: signatureImageBase64 || undefined,
             outputFilename: `${outputBaseName}.pdf`,
           },
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to process job");
-        throw new Error(errMsg);
-      }
-
-      const jobData = await jobRes.json();
-      setJobId(jobData.job_id || jobData.jobId);
+        };
+      const { jobId: newJobId } = startJob(jobBody.tool, file ? [file] : [], jobBody.options || {});
+      setJobId(newJobId);
     } catch (err: unknown) {
       setStatus("failed");
       setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");

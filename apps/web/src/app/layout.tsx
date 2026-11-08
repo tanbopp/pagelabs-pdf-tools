@@ -55,11 +55,20 @@ export const metadata: Metadata = {
     siteName: "PageLabs",
     title: "PageLabs — Clean, Modern PDF Tools",
     description: "Every PDF tool in one place. Fast, private, and minimal. Merge, split, compress, convert, and edit PDFs online.",
+    images: [
+      {
+        url: "/social-preview.png",
+        width: 1280,
+        height: 640,
+        alt: "PageLabs — Every PDF tool. One place.",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "PageLabs — Clean, Modern PDF Tools",
     description: "Every PDF tool in one place. Fast, private, and minimal.",
+    images: ["/social-preview.png"],
   },
   robots: {
     index: true,
@@ -142,7 +151,7 @@ export default function RootLayout({
             "name": "Are my files secure and private on PageLabs?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, documents are processed in sandboxed environments and client-side web engines. All files are automatically and irreversibly shredded within 2 hours."
+              "text": "Yes. Documents are processed entirely client-side with WebAssembly and JavaScript, so the file bytes never leave your device."
             }
           },
           {

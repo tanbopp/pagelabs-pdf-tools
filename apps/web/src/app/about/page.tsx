@@ -35,14 +35,14 @@ export default function AboutPage() {
           <div className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-foreground">Native Speed</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Processed by C++ and Python native engines in seconds rather than minutes.
+              Processed by WebAssembly and JavaScript in your own browser, in seconds rather than minutes.
             </p>
           </div>
 
           <div className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-foreground">Absolute Privacy</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Files are automatically and irreversibly shredded from storage after 2 hours.
+              Your files never leave your device. There is no upload, no storage bucket and no server copy to delete.
             </p>
           </div>
         </div>

@@ -6,14 +6,14 @@ import { FaqClient } from "./FaqClient";
 export const metadata: Metadata = {
   title: "Help Center & FAQ — PageLabs",
   description:
-    "Comprehensive Help Center and tool-specific FAQ covering all 25 PageLabs PDF utilities, file security, 2-hour shredding policy, limits, and processing features.",
+    "Comprehensive Help Center and tool-specific FAQ covering all 30+ PageLabs PDF utilities, file security, 2-hour shredding policy, limits, and processing features.",
   alternates: {
     canonical: "/faq",
   },
   openGraph: {
     title: "Help Center & FAQ — PageLabs",
     description:
-      "Comprehensive Help Center and tool-specific FAQ covering all 25 PageLabs PDF utilities, file security, 2-hour shredding policy, limits, and processing features.",
+      "Comprehensive Help Center and tool-specific FAQ covering all 30+ PageLabs PDF utilities, file security, 2-hour shredding policy, limits, and processing features.",
     url: "/faq",
     type: "website",
   },

@@ -1,5 +1,5 @@
 "use client";
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -16,7 +16,6 @@ import {
 import { toast } from "sonner";
 import { ChevronRight, ArrowRight, RefreshCcw, Image as ImageIcon, Trash2 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function JpgToPdfPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -64,15 +63,14 @@ export default function JpgToPdfPage() {
     if (status === "processing" && jobId) {
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
-          if (!res.ok) throw new Error("Failed to query status");
-          const data = await res.json();
+          const data = getJob(jobId);
+          if (!data) return;
 
           if (data.status === "completed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setStatus("completed");
             setResultData({
-              downloadUrl: `${API_BASE}/api/v1/download/${data.result_id}`,
+              downloadUrl: data.result_url || "",
               resultSize: data.result_size || 0,
               filename: `${outputBaseName.trim() || "images"}.pdf`,
             });
@@ -104,66 +102,20 @@ export default function JpgToPdfPage() {
     setErrorMessage(null);
 
     try {
-      const fileIds: string[] = [];
-
-      for (const f of files) {
-        const uploadRes = await fetch(`${API_BASE}/api/v1/upload`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: f.name,
-            contentType: f.type || "image/jpeg",
-            size: f.size,
-          }),
-        });
-
-        if (!uploadRes.ok) {
-          throw new Error(`Failed to upload ${f.name}`);
-        }
-
-        const { uploadId, uploadUrl } = await uploadRes.json();
-
-        const putRes = await fetch(uploadUrl, {
-          method: "PUT",
-          headers: {
-            "Content-Type": f.type || "image/jpeg",
-          },
-          body: f,
-        });
-
-        if (!putRes.ok) {
-          throw new Error(`Failed to upload binary for ${f.name}`);
-        }
-
-        fileIds.push(uploadId);
-      }
-
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const jobBody = {
           tool: "jpg-to-pdf",
-          file_id: fileIds[0],
-          file_ids: fileIds,
+
           options: {
             orientation,
             pageSize,
             margin,
           },
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to process job");
-        throw new Error(errMsg);
-      }
-
-      const { id } = await jobRes.json();
-      setJobId(id);
-    } catch (err: any) {
+        };
+      const { jobId: newJobId } = startJob(jobBody.tool, [...files], jobBody.options || {});
+      setJobId(newJobId);
+    } catch (err: unknown) {
       setStatus("failed");
-      setErrorMessage(err.message || "An unexpected error occurred");
-      toast.error(err.message || "An error occurred");
+      setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");
     }
   };
 

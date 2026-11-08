@@ -4,214 +4,304 @@
 
 **Every PDF tool. One place.**
 
-Clean, modern, and private PDF tools. Fast, minimal, and free.
+Clean, privacy-first PDF tools that do the job and get out of the way.
+No signup. No cookies. No ads. **Your files never leave your device.**
 
-[**Live Demo**](https://pagelabs.tanbopp.cloud) · [Report a Bug](https://github.com/tanbopp/pagelabs-pdf-tools/issues) · [Request a Feature](https://github.com/tanbopp/pagelabs-pdf-tools/issues)
+[**Try it live →**](https://pagelabs.tanbopp.cloud) · [Report a bug](https://github.com/tanbopp/pagelabs-pdf-tools/issues/new?template=bug_report.md) · [Request a feature](https://github.com/tanbopp/pagelabs-pdf-tools/issues/new?template=feature_request.md) · [Discussions](https://github.com/tanbopp/pagelabs-pdf-tools/discussions)
 
+[![CI](https://github.com/tanbopp/pagelabs-pdf-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/tanbopp/pagelabs-pdf-tools/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)
+![Tools](https://img.shields.io/badge/tools-31%20live-black.svg)
 ![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)
-![Python 3.12](https://img.shields.io/badge/Python-3.12-black.svg)
+![100% client-side](https://img.shields.io/badge/processing-100%25%20client--side-black.svg)
+![No database](https://img.shields.io/badge/database-none-black.svg)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-black.svg)
 
 </div>
 
-<!-- Add a screenshot or demo GIF here, e.g.
-![PageLabs preview](./docs/preview.png)
--->
+![PageLabs homepage](docs/screenshots/homepage.png)
 
 ---
 
-## About
+## Why PageLabs?
 
-PageLabs is an open-source suite of **30+ PDF tools** that does one thing well: gets your PDF job done without noise. No signup, no cookies, no clutter. Your files are automatically shredded after processing (within 2 hours at most).
+Most online PDF tools are ad farms. They upload your contracts and tax returns to anonymous
+servers, nag you to subscribe, watermark the result, and set a dozen tracking cookies along the
+way.
 
-Under the hood, a Next.js frontend and a Hono API hand the heavy lifting to a Python worker pipeline built on native PDF libraries (`pikepdf`, `qpdf`, `Ghostscript`, `pdfplumber`, `ocrmypdf`, and `ReportLab`), so even large files are handled reliably.
+PageLabs is the opposite: a flat, fast, open-source suite that runs **entirely inside your
+browser**. There is no upload endpoint, no database and no worker — the document is read with
+`pdf-lib`/`pdf.js` and processed on your own CPU. If you would rather run it yourself, a single
+Next.js app is all you need.
+
+- **Privacy by architecture** — files are opened with the File API and processed in the browser.
+  Nothing is sent over the network, there is no storage bucket to purge, and there are **zero
+tracking cookies**.
+- **31 working tools** — the boring essentials (merge, compress, rotate) and the awkward ones
+  (OCR, redact, compare, PDF/A).
+- **No watermark, no account, no export paywall.**
+- **Deploy anywhere static-ish** — one `next build` on Vercel, Netlify, Cloudflare or your own
+  box. No server environment variables required.
+- **Open source, MIT licensed.** Read the code before you trust it with a document.
+
+![How PageLabs works](docs/demo.gif)
 
 ---
 
 ## Tools
 
-| Category | Tools |
+31 tools are live today. Two more (AI Summarizer, Translate PDF) are in the registry and marked
+coming soon.
+
+### Organize & Manage
+
+| Tool | What it does |
 | --- | --- |
-| **Organize & Manage** | Merge PDF, Split PDF, Remove Pages, Extract Pages, Organize PDF, Scan to PDF, Rotate PDF |
-| **Optimize & Repair** | Compress PDF, Repair PDF, OCR PDF |
-| **Convert to PDF** | Word to PDF, Excel to PDF, PowerPoint to PDF, JPG to PDF, HTML to PDF |
-| **Convert from PDF** | PDF to Word, PDF to Excel, PDF to PowerPoint, PDF to JPG, PDF to PDF/A, HEIC to JPG |
-| **Edit PDF** | Page Numbers, Watermark, Crop PDF, PDF Forms, Edit PDF |
-| **Security** | Protect PDF, Unlock PDF, Sign PDF, Redact PDF, Compare PDF |
-| **AI Tools** *(coming soon)* | AI Summarizer, Translate PDF |
+| [Merge PDF](https://pagelabs.tanbopp.cloud/tools/merge-pdf) | Combine up to 20 PDFs into one, in any order, with optional bookmarks |
+| [Split PDF](https://pagelabs.tanbopp.cloud/tools/split-pdf) | Split by ranges, by interval, or into one file per page |
+| [Remove Pages](https://pagelabs.tanbopp.cloud/tools/remove-pages) | Delete unwanted pages from a PDF |
+| [Extract Pages](https://pagelabs.tanbopp.cloud/tools/extract-pages) | Keep only the pages you need, or export each one separately |
+| [Organize PDF](https://pagelabs.tanbopp.cloud/tools/organize-pdf) | Reorder, rotate and delete pages with drag and drop |
+| [Scan to PDF](https://pagelabs.tanbopp.cloud/tools/scan-to-pdf) | Turn photos of documents into a single tidy PDF |
+| [Rotate PDF](https://pagelabs.tanbopp.cloud/tools/rotate-pdf) | Rotate every page or just the sideways ones |
 
-Try them all at **[pagelabs.tanbopp.cloud](https://pagelabs.tanbopp.cloud)**.
+### Optimize & Repair
+
+| Tool | What it does |
+| --- | --- |
+| [Compress PDF](https://pagelabs.tanbopp.cloud/tools/compress-pdf) | Three compression levels, with the resulting size shown before download |
+| [Repair PDF](https://pagelabs.tanbopp.cloud/tools/repair-pdf) | Rebuild the structure of a corrupted PDF and recover readable pages |
+| [OCR PDF](https://pagelabs.tanbopp.cloud/tools/ocr-pdf) | Add a searchable text layer to scans in 100+ languages |
+
+### Convert to PDF
+
+| Tool | What it does |
+| --- | --- |
+| [Word to PDF](https://pagelabs.tanbopp.cloud/tools/word-to-pdf) | DOC/DOCX to PDF with fonts and layout preserved |
+| [Excel to PDF](https://pagelabs.tanbopp.cloud/tools/excel-to-pdf) | XLS/XLSX to PDF, with fit-to-page for wide sheets |
+| [PowerPoint to PDF](https://pagelabs.tanbopp.cloud/tools/powerpoint-to-pdf) | PPT/PPTX to PDF, one slide per page |
+| [JPG to PDF](https://pagelabs.tanbopp.cloud/tools/jpg-to-pdf) | JPG, PNG and WebP images into a single PDF |
+| [HTML to PDF](https://pagelabs.tanbopp.cloud/tools/html-to-pdf) | Render HTML files to PDF with a real browser engine |
+
+### Convert from PDF
+
+| Tool | What it does |
+| --- | --- |
+| [PDF to Word](https://pagelabs.tanbopp.cloud/tools/pdf-to-word) | Editable DOCX, with optional OCR for scans |
+| [PDF to Excel](https://pagelabs.tanbopp.cloud/tools/pdf-to-excel) | Extract PDF tables into a real spreadsheet |
+| [PDF to PowerPoint](https://pagelabs.tanbopp.cloud/tools/pdf-to-powerpoint) | One PDF page per editable slide |
+| [PDF to JPG](https://pagelabs.tanbopp.cloud/tools/pdf-to-jpg) | Export pages as JPG or PNG at your chosen DPI |
+| [PDF to PDF/A](https://pagelabs.tanbopp.cloud/tools/pdf-to-pdfa) | PDF/A-2b or PDF/A-3b for long-term archiving |
+| [HEIC to JPG](https://pagelabs.tanbopp.cloud/tools/heic-to-jpg) | Convert iPhone photos to widely supported JPGs |
+
+### Edit PDF
+
+| Tool | What it does |
+| --- | --- |
+| [Page Numbers](https://pagelabs.tanbopp.cloud/tools/add-page-numbers) | Position, format, font and starting number for page numbering |
+| [Watermark](https://pagelabs.tanbopp.cloud/tools/add-watermark) | Text or image watermark with opacity, rotation and page range |
+| [Crop PDF](https://pagelabs.tanbopp.cloud/tools/crop-pdf) | Auto or manual margin trimming |
+| [PDF Forms](https://pagelabs.tanbopp.cloud/tools/pdf-forms) | Fill or flatten form fields |
+| [Edit PDF](https://pagelabs.tanbopp.cloud/tools/edit-pdf) | Add text, draw, highlight and annotate |
+
+### Security
+
+| Tool | What it does |
+| --- | --- |
+| [Protect PDF](https://pagelabs.tanbopp.cloud/tools/protect-pdf) | Encrypt with a password and restrict printing or copying |
+| [Unlock PDF](https://pagelabs.tanbopp.cloud/tools/unlock-pdf) | Remove a password you already know from your own file |
+| [Sign PDF](https://pagelabs.tanbopp.cloud/tools/sign-pdf) | Draw or type a signature and place it on any page |
+| [Redact PDF](https://pagelabs.tanbopp.cloud/tools/redact-pdf) | Remove matching text from the file content, not just cover it |
+| [Compare PDF](https://pagelabs.tanbopp.cloud/tools/compare-pdf) | Find the differences between two versions of a document |
+
+### Coming soon
+
+| Tool | Status |
+| --- | --- |
+| AI Summarizer | In the registry, not available yet |
+| Translate PDF | In the registry, not available yet |
 
 ---
 
-## Key Highlights
+## Screenshots
 
-- **No Shadows, Ultra-Clean Design:** Strict minimal aesthetics, stark high-contrast typography (Manrope), and smooth micro-interactions.
-- **Privacy-First (Shred on Complete):** Strictly ephemeral storage. Uploaded and generated files are automatically purged with a scheduled purge cron, and worker temp directories are shredded after each job.
-- **Security Hardened:**
-  - Content Security Policy (CSP), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`.
-  - Binary magic-byte signature validation on uploads (prevents executable MIME spoofing).
-  - Subprocess shell sanitization and strict directory traversal prevention.
-- **Performance & Resiliency:**
-  - Preloaded Manrope typography with zero cumulative layout shift (CLS).
-  - Out-of-memory (OOM) handling for heavy PDF processing workloads.
-  - Strict anonymous rate limiting (10 jobs/hour per IP).
-- **Accessibility (A11y):**
-  - Full keyboard accessibility and screen reader support (`aria-label`, `aria-describedby`, focus rings).
-  - Respects OS-level `prefers-reduced-motion` settings.
+| Merge PDF | Compress PDF |
+| --- | --- |
+| ![Merge PDF](docs/screenshots/merge-pdf.png) | ![Compress PDF](docs/screenshots/compress-pdf.png) |
+
+| Edit PDF | Full tool index |
+| --- | --- |
+| ![Edit PDF](docs/screenshots/edit-pdf.png) | ![All tools](docs/screenshots/homepage-full.png) |
+
+Screenshots are regenerated with `node scripts/capture-docs.mjs` (see [docs/](docs/README.md)).
 
 ---
 
-## Tech Stack
+## Key highlights
 
-- **Frontend:** Next.js 16 (App Router, Turbopack, Server Components), Tailwind CSS v4, Lucide React, dnd-kit.
-- **API Gateway:** Hono on Node.js, Zod schema validation, SQLite / PostgreSQL, Redis BullMQ.
-- **Processing Engine:** Python 3.12 (`pikepdf`, `qpdf`, `ghostscript`, `reportlab`, `ocrmypdf`, `playwright`, `weasyprint`, `pdf2docx`, `openpyxl`).
-- **Storage & Infrastructure:** MinIO / AWS S3 / Cloudflare R2, Docker & Docker Compose.
+- **Flat, shadowless design.** No gradients, no elevation, no glass effects. Depth comes from
+  1px borders and surface contrast only, with generous 24px radii and Manrope typography.
+- **Privacy by default.** Uploads do not exist. The browser reads the file you picked, the
+  resulting bytes become a `blob:` URL, and nothing is written to a server. PageLabs sets no
+  cookies and uses no analytics.
+- **Security by subtraction.** With no upload endpoint there is no storage to leak, no signed-URL
+  surface and no queue to poison. A strict Content Security Policy,
+  `X-Frame-Options: DENY` and `X-Content-Type-Options: nosniff` still ship with the app.
+- **Bounded resource use.** Every processor is client-side and streams through `pdf.js`/
+  `pdf-lib`; heavy work (OCR, rasterisation) reports progress instead of blocking the UI, and
+  the tab stays responsive.
+- **Accessible.** Full keyboard navigation, screen-reader labels, visible focus rings, and
+  respect for `prefers-reduced-motion`.
 
 ---
 
-## Project Structure
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Frontend | Next.js 16 (App Router, Turbopack), React 19, Tailwind CSS v4, Radix UI, dnd-kit |
+| PDF engine | `pdf-lib` (merge, split, rotate, crop, watermark, page numbers, forms, signing) and `pdf.js` (rasterising, text extraction) |
+| Conversions | `jspdf`, `docx`, `xlsx`, `pptxgenjs`, `jszip` |
+| OCR | `tesseract.js` (WASM, runs in the tab) |
+| Images | `heic2any` for HEIC → JPG |
+| Hosting | Static/SSR Next.js output — Vercel, Netlify, Cloudflare or self-hosted |
+
+---
+
+## Project structure
 
 ```text
 pagelabs-pdf-tools/
 ├── apps/
-│   ├── api/          # Hono API gateway, job management, signed uploads, rate limiting
-│   ├── web/          # Next.js 16 web application & interactive PDF tools
-│   └── worker/       # Python processing recipes & CLI runner
+│   └── web/          # Next.js 16 app: tool UIs, browser processors, SEO
+│       └── src/lib/local/   # The client-side engine (pdf-lib / pdf.js / tesseract.js)
 ├── packages/
-│   └── shared/       # Shared Zod schemas, tool registries, and types
-├── docker-compose.yml       # Local development containers (Postgres, Redis, MinIO)
-├── docker-compose.prod.yml  # Production multi-container orchestrator
-└── .env.production.example  # Production environment variables reference
+│   └── shared/       # Zod schemas, tool registry, shared types
+├── docs/             # Screenshots, social preview, capture script notes
+└── prd/              # Product requirement documents for each tool stage
 ```
+
+The **tool registry** in `packages/shared/src/tools.ts` is the single source of truth: it drives
+the homepage grid, the sitemap, per-tool metadata and the FAQ copy.
+
+The **local engine** in `apps/web/src/lib/local/` is the single processing layer: `jobs.ts`
+validates the tool slug and runs the matching processor, while `tools-pdf.ts` and
+`tools-convert.ts` hold the individual operations. There is no network call in that folder.
 
 ---
 
-## Getting Started (Local Development)
+## Getting started
 
-### 1. Prerequisites
+### Prerequisites
 
-- **Node.js:** `>= 20.0.0`
-- **pnpm:** `>= 9.0.0`
-- **Python:** `>= 3.11`
-- **Docker & Docker Compose** (optional, for local Redis / MinIO / Postgres)
+- Node.js **20+**
+- pnpm **9+**
 
-### 2. Clone and Install Dependencies
+That is all. There is no database, no Redis, no Python and no system package to install.
+
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/tanbopp/pagelabs-pdf-tools.git
 cd pagelabs-pdf-tools
-
-# Copy the example environment file and adjust the values
-cp .env.example .env
-
-# Install monorepo JS/TS dependencies
 pnpm install
-
-# Set up the Python worker virtual environment
-cd apps/worker
-python -m venv venv
-# On Windows:
-.\venv\Scripts\activate
-# On Linux/macOS:
-source venv/bin/activate
-
-pip install -r requirements.txt
-cd ../..
 ```
 
-### 3. Start Infrastructure Services (Recommended)
+### 2. Run the app
 
 ```bash
-docker compose up -d
-```
-
-### 4. Run Development Servers
-
-```bash
-# Run all workspace apps concurrently
 pnpm dev
 ```
 
-- Web application: [http://localhost:3000](http://localhost:3000)
-- API gateway: [http://localhost:3001](http://localhost:3001)
+- Web app: <http://localhost:3000>
+
+Open DevTools → Network while using a tool: the only requests are for the page itself, the
+`pdf.worker.min.mjs` asset and (first time only) OCR language data. Your document is never sent
+anywhere.
 
 ---
 
-## Production Deployment
+## Self-hosting
 
-### Option A: Full Docker Compose (VPS / Single Host)
+### Option A — Vercel (recommended)
 
-1. Copy and configure the production environment variables:
-   ```bash
-   cp .env.production.example .env.production
-   ```
-2. Build and run the containers:
-   ```bash
-   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
-   ```
+Import the repository, leave the root directory at the repo root and deploy. `vercel.json`
+runs `pnpm build:vercel` and publishes `apps/web/.next`. **No environment variables are needed.**
 
-### Option B: Cloud Split Deployment (Recommended)
-
-- **Frontend (`apps/web`):** Deploy to **Vercel** or **Cloudflare Pages**.
-  - Root directory: `apps/web`
-  - Build command: `pnpm build`
-  - Output directory: `.next`
-  - Set `NEXT_PUBLIC_API_URL` to your production API URL.
-- **API Gateway (`apps/api`):** Deploy to **Railway**, **Render**, or **Fly.io** using `apps/api/Dockerfile`.
-- **Python Worker (`apps/worker`):** Deploy as a background worker on **Railway** or AWS ECS (CPU/GPU nodes) using `apps/worker/Dockerfile`.
-- **Database & Storage:** Managed PostgreSQL (e.g. Supabase / Neon) and AWS S3 / Cloudflare R2.
-
----
-
-## Testing & Validation
+### Option B — Any Node host / static export
 
 ```bash
-# Run unit & schema tests
-pnpm --filter @pagelabs/shared test
-pnpm --filter @pagelabs/api test
+pnpm build
+pnpm --filter web start
+```
 
-# Full monorepo production build check
+Because every processor runs in the browser, you can also serve the app from a CDN or a single
+small container. There are no S3 buckets, queues or database migrations to manage.
+
+---
+
+## Testing
+
+```bash
+# TypeScript unit and schema tests
+pnpm --filter @pagelabs/shared test
+
+# Typecheck, lint and full production build
+pnpm typecheck
+pnpm lint
 pnpm build
 ```
+
+The browser processors are exercised manually through each tool page; the shared schemas and
+tool registry are covered by unit tests. CI runs install, tests, typecheck and build on every push
+and pull request.
 
 ---
 
 ## Roadmap
 
-- [ ] **AI Summarizer:** summarize PDF documents quickly
-- [ ] **Translate PDF:** translate while preserving the original layout
-- [ ] **Multi-language UI:** starting with Indonesian
-- [ ] More tools and improvements based on your feedback
+- [x] 31 PDF tools across organize, optimize, convert, edit and security
+- [x] Privacy-first processing with scheduled shredding
+- [x] Docker Compose self-hosting
+- [x] Search-optimised tool pages with structured data
+- [ ] **AI Summarizer** — summarize long documents (in the registry, not live)
+- [ ] **Translate PDF** — translate while preserving layout (in the registry, not live)
+- [ ] **Multi-language UI** — starting with Indonesian
+- [ ] Per-tool usage docs and a public API
 
-Have an idea? [Open an issue](https://github.com/tanbopp/pagelabs-pdf-tools/issues).
+Have an idea or want to pick one of these up? [Open an issue](https://github.com/tanbopp/pagelabs-pdf-tools/issues/new/choose).
 
 ---
 
 ## Contributing
 
-Contributions are welcome, whether it's a bug fix, a new tool, or a docs improvement.
+Contributions are welcome: bug fixes, new tools, translations, accessibility work and docs.
 
-1. Fork the repository
-2. Create a branch: `git checkout -b feature/your-feature`
-3. Make your changes and run the tests (see [Testing & Validation](#testing--validation))
-4. Commit and push: `git commit -m "Add your feature"`
-5. Open a Pull Request
+1. Read [CONTRIBUTING.md](CONTRIBUTING.md).
+2. Fork the repository and branch from `main` (`feat/...`, `fix/...`, `docs/...`).
+3. Make a focused change and follow [Conventional Commits](https://www.conventionalcommits.org/).
+4. Run the tests and `pnpm build`.
+5. Open a pull request using the template.
 
-New here? Look for issues labeled [`good first issue`](https://github.com/tanbopp/pagelabs-pdf-tools/labels/good%20first%20issue).
+New here? Look for [`good first issue`](https://github.com/tanbopp/pagelabs-pdf-tools/labels/good%20first%20issue)
+or [`help wanted`](https://github.com/tanbopp/pagelabs-pdf-tools/labels/help%20wanted).
+
+Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before participating. For security
+issues, follow [SECURITY.md](SECURITY.md) — never open a public issue.
+
+Maintainers: repository settings, labels, starter issues and release commands live in
+[docs/GITHUB_SETUP.md](docs/GITHUB_SETUP.md).
 
 ---
 
 ## License
 
-MIT License. Free and open source for everyone.
+[MIT](LICENSE) © 2026 PageLabs (tanbopp). Free and open source for everyone.
 
 ---
 
 <div align="center">
 
-If PageLabs saves you some time, consider giving it a ⭐
+If PageLabs saved you some time, a ⭐ helps other people find it.
 
 </div>

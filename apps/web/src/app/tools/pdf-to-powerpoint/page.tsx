@@ -1,5 +1,5 @@
 "use client";
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -15,8 +15,6 @@ import {
 } from "@/components/shared";
 import { toast } from "sonner";
 import { ChevronRight, ArrowRight, RefreshCcw } from "lucide-react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function PdfToPowerpointPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -52,33 +50,20 @@ export default function PdfToPowerpointPage() {
   };
 
   const notFoundCountRef = useRef<number>(0);
+  void notFoundCountRef;
 
   useEffect(() => {
     if (status === "processing" && jobId) {
-      notFoundCountRef.current = 0;
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
-          if (res.status === 404) {
-            notFoundCountRef.current += 1;
-            // Graceful retry up to 3 times before declaring not found
-            if (notFoundCountRef.current < 4) {
-              return;
-            }
-            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-            setStatus("failed");
-            setErrorMessage("Job not found. Please try again.");
-            return;
-          }
-
-          if (!res.ok) throw new Error("Failed to query status");
-          const data = await res.json();
+          const data = getJob(jobId);
+          if (!data) return;
 
           if (data.status === "completed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setStatus("completed");
             setResultData({
-              downloadUrl: `${API_BASE}${data.result_url}`,
+              downloadUrl: data.result_url || "",
               resultSize: data.result_size || 0,
               filename: `${outputBaseName}.pptx`,
             });
@@ -111,56 +96,12 @@ export default function PdfToPowerpointPage() {
     setErrorMessage(null);
 
     try {
-      const signRes = await fetch(`${API_BASE}/api/v1/uploads/sign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          size: file.size,
-          contentType: "application/pdf",
-        }),
-      });
-      if (!signRes.ok) {
-        const errMsg = await parseApiError(signRes, "Failed to sign upload");
-        throw new Error(errMsg);
-      }
-      const { uploadUrl, fileUrl } = await signRes.json();
-
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": "application/pdf" },
-      });
-      if (!uploadRes.ok) {
-        const uploadErrText = await uploadRes.text().catch(() => "");
-        throw new Error(`Upload failed (${uploadRes.status}): ${uploadErrText || uploadRes.statusText}`);
-      }
-
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tool: "pdf-to-powerpoint",
-          files: [
-            {
-              url: fileUrl,
-              name: file.name,
-              size: file.size,
-            },
-          ],
-          options: {
-            outputFilename: `${outputBaseName}.pptx`,
-          },
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to process job");
-        throw new Error(errMsg);
-      }
-
-      const jobData = await jobRes.json();
-      setJobId(jobData.job_id || jobData.jobId);
+      const { jobId: newJobId } = startJob(
+        "pdf-to-powerpoint",
+        [file],
+        { outputFilename: `${outputBaseName}.pptx` }
+      );
+      setJobId(newJobId);
     } catch (err: unknown) {
       setStatus("failed");
       setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");

@@ -1,6 +1,6 @@
 "use client";
 
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
@@ -23,8 +23,6 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 type GridPosition =
   | "top-left"
@@ -320,17 +318,13 @@ export default function AddPageNumbersPage() {
   const pollJobStatus = (id: string) => {
     pollIntervalRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/v1/jobs/${id}`);
-        if (!res.ok) {
-          const errMsg = await parseApiError(res, "Failed to poll job status");
-          throw new Error(errMsg);
-        }
-        const data = await res.json();
+        const data = getJob(id);
+        if (!data) return;
         if (data.status === "completed") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setStatus("completed");
           setResultData({
-            downloadUrl: `${API_BASE}${data.result_url}`,
+            downloadUrl: data.result_url || "",
             resultSize: data.result_size || 0,
             filename: `${outputBaseName}.pdf`,
           });
@@ -357,35 +351,6 @@ export default function AddPageNumbersPage() {
     setErrorMessage(null);
 
     try {
-      // 1. Get Presigned Upload URL
-      const signRes = await fetch(`${API_BASE}/api/v1/uploads/sign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          size: file.size,
-          contentType: file.type || "application/pdf",
-        }),
-      });
-
-      if (!signRes.ok) {
-        const errMsg = await parseApiError(signRes, "Failed to initialize upload");
-        throw new Error(errMsg);
-      }
-      const { uploadUrl, fileKey } = await signRes.json();
-
-      // 2. Upload file to Storage
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type || "application/pdf" },
-        body: file,
-      });
-
-      if (!uploadRes.ok) {
-        throw new Error("Failed to upload document file");
-      }
-
-      // 3. Create Job
       const payloadOptions = {
         pageMode,
         firstPageCover,
@@ -405,30 +370,9 @@ export default function AddPageNumbersPage() {
         outputFilename: `${outputBaseName}.pdf`,
       };
 
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tool: "add-page-numbers",
-          files: [
-            {
-              url: fileKey,
-              name: file.name,
-              size: file.size,
-            },
-          ],
-          options: payloadOptions,
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to create processing task");
-        throw new Error(errMsg);
-      }
-
-      const jobData = await jobRes.json();
-      setJobId(jobData.jobId);
-      pollJobStatus(jobData.jobId);
+      const { jobId: newJobId } = startJob("add-page-numbers", [file], payloadOptions);
+      setJobId(newJobId);
+      pollJobStatus(newJobId);
     } catch (err: any) {
       setStatus("failed");
       setErrorMessage(err.message || "Failed to process PDF");

@@ -1,6 +1,6 @@
 "use client";
 
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout-shell";
@@ -48,8 +48,6 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export interface CustomRangeItem {
   id: string;
@@ -581,24 +579,20 @@ export default function SplitPdfPage() {
     pollIntervalRef.current = setInterval(async () => {
       attempts++;
       try {
-        const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
-        if (!res.ok) {
-          if (res.status === 404 && attempts < 5) return;
-          throw new Error("Job not found or API error");
-        }
-        const data = await res.json();
+        const data = getJob(jobId);
+        if (!data) return;
 
         if (data.status === "completed") {
           setStatus("completed");
           setResultData({
-            downloadUrl: `${API_BASE}${data.downloadUrl}`,
-            resultSize: data.resultSize || 0,
+            downloadUrl: data.result_url || "",
+            resultSize: data.result_size || 0,
             filename: `${outputBaseName}.zip`,
           });
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         } else if (data.status === "failed") {
           setStatus("failed");
-          setErrorMessage(data.error || "Failed to split PDF");
+          setErrorMessage(data.error_message || "Failed to split PDF");
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         }
       } catch (err: unknown) {
@@ -621,25 +615,6 @@ export default function SplitPdfPage() {
     setErrorMessage(null);
 
     try {
-      const signRes = await fetch(`${API_BASE}/api/v1/uploads/sign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          size: file.size,
-          contentType: file.type || "application/pdf",
-        }),
-      });
-      if (!signRes.ok) throw new Error("Failed to sign upload URL");
-      const { uploadUrl, fileUrl } = await signRes.json();
-
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": "application/pdf" },
-      });
-      if (!uploadRes.ok) throw new Error("Failed to upload file");
-
       let jobOptions: Record<string, unknown> = {
         outputFilename: `${outputBaseName}.zip`,
       };
@@ -682,22 +657,7 @@ export default function SplitPdfPage() {
         };
       }
 
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tool: "split-pdf",
-          files: [{ url: fileUrl, name: file.name, size: file.size }],
-          options: jobOptions,
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to process job");
-        throw new Error(errMsg);
-      }
-
-      const { jobId: newId } = await jobRes.json();
+      const { jobId: newId } = startJob("split-pdf", [file], jobOptions);
       setJobId(newId);
     } catch (err: unknown) {
       setStatus("failed");

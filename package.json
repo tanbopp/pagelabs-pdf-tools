@@ -1,13 +1,41 @@
 {
   "name": "pagelabs",
+  "version": "0.1.0",
   "private": true,
+  "description": "Clean, privacy-first suite of PDF tools that run entirely in your browser: merge, compress, convert, OCR and more. Files never leave your device.",
+  "license": "MIT",
+  "author": "tanbopp",
+  "homepage": "https://pagelabs.tanbopp.cloud",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tanbopp/pagelabs-pdf-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tanbopp/pagelabs-pdf-tools/issues"
+  },
+  "keywords": [
+    "pdf-tools",
+    "pdf-processing",
+    "pdf-converter",
+    "pdf-compressor",
+    "ocr",
+    "privacy-first",
+    "open-source",
+    "nextjs",
+    "typescript",
+    "client-side",
+    "webassembly",
+    "pdf-lib",
+    "tailwindcss",
+    "monorepo",
+    "pnpm",
+    "vercel"
+  ],
   "packageManager": "pnpm@11.21.0",
   "scripts": {
-    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "dev": "pnpm --filter web dev",
     "dev:web": "pnpm --filter web dev",
-    "dev:api": "pnpm --filter api dev",
-    "dev:worker": "pnpm --filter worker dev",
-    "build": "pnpm --filter \"./packages/*\" build && pnpm --filter \"./apps/*\" build",
+    "build": "pnpm --filter shared build && pnpm --filter web build",
     "build:vercel": "pnpm --filter shared build && pnpm --filter web build",
     "lint": "pnpm --recursive lint",
     "typecheck": "pnpm --recursive typecheck",

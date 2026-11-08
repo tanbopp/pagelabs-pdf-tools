@@ -1,5 +1,5 @@
 "use client";
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -16,7 +16,6 @@ import {
 import { toast } from "sonner";
 import { ChevronRight, ArrowRight, RefreshCcw, Code } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function HtmlToPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -56,15 +55,14 @@ export default function HtmlToPdfPage() {
     if (status === "processing" && jobId) {
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
-          if (!res.ok) throw new Error("Failed to query status");
-          const data = await res.json();
+          const data = getJob(jobId);
+          if (!data) return;
 
           if (data.status === "completed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setStatus("completed");
             setResultData({
-              downloadUrl: `${API_BASE}/api/v1/download/${data.result_id}`,
+              downloadUrl: data.result_url || "",
               resultSize: data.result_size || 0,
               filename: `${outputBaseName.trim() || "webpage"}.pdf`,
             });
@@ -96,57 +94,18 @@ export default function HtmlToPdfPage() {
     setErrorMessage(null);
 
     try {
-      const uploadRes = await fetch(`${API_BASE}/api/v1/upload`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type || "text/html",
-          size: file.size,
-        }),
-      });
-
-      if (!uploadRes.ok) {
-        throw new Error("Failed to obtain upload ticket");
-      }
-
-      const { uploadId, uploadUrl } = await uploadRes.json();
-
-      const putRes = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type || "text/html",
-        },
-        body: file,
-      });
-
-      if (!putRes.ok) {
-        throw new Error("Failed to upload HTML file");
-      }
-
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const jobBody = {
           tool: "html-to-pdf",
-          file_id: uploadId,
+
           options: {
             pageSize,
           },
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to process job");
-        throw new Error(errMsg);
-      }
-
-      const { id } = await jobRes.json();
-      setJobId(id);
-    } catch (err: any) {
+        };
+      const { jobId: newJobId } = startJob(jobBody.tool, file ? [file] : [], jobBody.options || {});
+      setJobId(newJobId);
+    } catch (err: unknown) {
       setStatus("failed");
-      setErrorMessage(err.message || "An unexpected error occurred");
-      toast.error(err.message || "An error occurred");
+      setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");
     }
   };
 
@@ -178,6 +137,11 @@ export default function HtmlToPdfPage() {
           onReset={handleReset}
           options={
             <>
+              <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-xs font-medium leading-relaxed text-foreground">
+                <strong className="font-bold">Browser limitations.</strong> Rendering remote
+                web pages needs a server-side browser, so this tool cannot run locally. Please use
+                our API version for full HTML layouts.
+              </div>
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-foreground">Render Options</h2>
               </div>

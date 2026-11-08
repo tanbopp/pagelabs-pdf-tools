@@ -1,5 +1,5 @@
 "use client";
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 
 import React, { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/layout-shell";
@@ -14,8 +14,6 @@ import {
 import { toast } from "sonner";
 import * as SwitchPrimitives from "@radix-ui/react-switch";
 import { ArrowRight, Info, Loader2 } from "lucide-react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function OcrPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -60,15 +58,14 @@ export default function OcrPdfPage() {
     if (status === "processing" && jobId) {
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
-          if (!res.ok) throw new Error("Failed to query status");
-          const data = await res.json();
+          const data = getJob(jobId);
+          if (!data) return;
 
           if (data.status === "completed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setStatus("completed");
             setResultData({
-              downloadUrl: `${API_BASE}${data.result_url}`,
+              downloadUrl: data.result_url || "",
               resultSize: data.result_size || 0,
               filename: `${outputBaseName}.pdf`,
             });
@@ -94,60 +91,16 @@ export default function OcrPdfPage() {
     const isForce = overrideForce !== undefined ? overrideForce : forceOcr;
 
     try {
-      const signRes = await fetch(`${API_BASE}/api/v1/uploads/sign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          size: file.size,
-          contentType: file.type || "application/pdf",
-        }),
-      });
-      if (!signRes.ok) {
-        const errMsg = await parseApiError(signRes, "Failed to sign upload");
-        throw new Error(errMsg);
-      }
-      const { uploadUrl, fileUrl } = await signRes.json();
+      const ocrOptions = {
+        languages: selectedLanguages,
+        language: selectedLanguages[0] || "eng",
+        add_text_layer_only: addTextLayerOnly,
+        force_ocr: isForce,
+        outputFilename: `${outputBaseName}.pdf`,
+      };
 
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": "application/pdf" },
-      });
-      if (!uploadRes.ok) {
-        const uploadErrText = await uploadRes.text().catch(() => "");
-        throw new Error(`Upload failed (${uploadRes.status}): ${uploadErrText || uploadRes.statusText}`);
-      }
-
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tool: "ocr-pdf",
-          files: [
-            {
-              url: fileUrl,
-              name: file.name,
-              size: file.size,
-            },
-          ],
-          options: {
-            languages: selectedLanguages,
-            language: selectedLanguages[0] || "eng",
-            add_text_layer_only: addTextLayerOnly,
-            force_ocr: isForce,
-            outputFilename: `${outputBaseName}.pdf`,
-          },
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to process job");
-        throw new Error(errMsg);
-      }
-
-      const jobData = await jobRes.json();
-      setJobId(jobData.job_id || jobData.jobId);
+      const { jobId: newJobId } = startJob("ocr-pdf", [file], ocrOptions);
+      setJobId(newJobId);
     } catch (err: unknown) {
       setStatus("failed");
       setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");

@@ -1,5 +1,5 @@
 "use client";
-import { parseApiError } from "@/lib/api-client";
+import { getJob, startJob } from "@/lib/local/jobs";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -26,7 +26,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 interface PageThumbnailItem {
   pageNumber: number; // 1-based index
@@ -116,15 +115,14 @@ export default function RemovePagesPage() {
     if (status === "processing" && jobId) {
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
-          if (!res.ok) throw new Error("Failed to query status");
-          const data = await res.json();
+          const data = getJob(jobId);
+          if (!data) return;
 
           if (data.status === "completed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setStatus("completed");
             setResultData({
-              downloadUrl: `${API_BASE}${data.result_url}`,
+              downloadUrl: data.result_url || "",
               resultSize: data.result_size || 0,
               filename: `${outputBaseName}.pdf`,
             });
@@ -148,48 +146,19 @@ export default function RemovePagesPage() {
     setErrorMessage(null);
 
     try {
-      const signRes = await fetch(`${API_BASE}/api/v1/uploads/sign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          size: file.size,
-          contentType: file.type || "application/pdf",
-        }),
-      });
-      if (!signRes.ok) throw new Error("Failed to sign upload URL");
-      const { uploadUrl, fileUrl } = await signRes.json();
-
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": "application/pdf" },
-      });
-      if (!uploadRes.ok) throw new Error("Failed to upload file");
-
-      const jobRes = await fetch(`${API_BASE}/api/v1/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const jobBody = {
           tool: "remove-pages",
-          files: [{ url: fileUrl, name: file.name, size: file.size }],
+
           options: {
             pages: pagesToRemoveString,
             outputFilename: `${outputBaseName}.pdf`,
           },
-        }),
-      });
-
-      if (!jobRes.ok) {
-        const errMsg = await parseApiError(jobRes, "Failed to process job");
-        throw new Error(errMsg);
-      }
-
-      const { jobId: newId } = await jobRes.json();
-      setJobId(newId);
+        };
+      const { jobId: newJobId } = startJob(jobBody.tool, file ? [file] : [], jobBody.options || {});
+      setJobId(newJobId);
     } catch (err: unknown) {
       setStatus("failed");
-      setErrorMessage(err instanceof Error ? err.message : "Failed to remove pages");
+      setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");
     }
   };
 
